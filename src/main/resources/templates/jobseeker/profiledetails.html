@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Your Profile - CareerConnect</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8fafc;
+        }
+        .seeker-text {
+            color: #10b981;
+        }
+        .seeker-bg {
+            background-color: rgba(16, 185, 129, 0.05);
+        }
+        .transition-all {
+            transition: all 0.3s ease;
+        }
+        .custom-select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+    </style>
+</head>
+<body>
+<div class="min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="bg-white shadow-sm py-2">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <div class="flex items-center">
+                <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/c770719f-859b-4ee4-86b5-32aa7a948a55.png"
+                     alt="CareerConnect logo"
+                     class="mr-2"
+                     style="width: 80px; height: auto;">
+                <h1 class="text-lg font-bold text-gray-800">CareerConnect</h1>
+            </div>
+            <nav>
+                <ul class="flex space-x-6">
+                    <li><a th:href="@{/}" class="text-gray-600 hover:text-gray-900 transition-all">Home</a></li>
+                    <li><a href="#" class="text-gray-600 hover:text-gray-900 transition-all">About</a></li>
+                    <li><a href="#" class="text-gray-600 hover:text-gray-900 transition-all">Contact</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow py-8">
+        <div class="container mx-auto px-4">
+            <div class="max-w-3xl mx-auto">
+                <!-- Progress Indicator -->
+                <div class="mb-8">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <div class="h-2 bg-green-500 rounded-l-full"></div>
+                        </div>
+                        <div class="flex-1">
+                            <div class="h-2 bg-green-500"></div>
+                        </div>
+                        <div class="flex-1">
+                            <div class="h-2 bg-gray-200 rounded-r-full"></div>
+                        </div>
+                    </div>
+                    <div class="flex justify-between text-xs mt-2">
+                        <div class="text-green-600 font-medium">Account Created</div>
+                        <div class="text-green-600 font-medium">Career Details</div>
+                        <div class="text-gray-400">Resume & Preferences</div>
+                    </div>
+                </div>
+
+                <!-- Form Card -->
+                <div class="bg-white rounded-xl shadow-md overflow-hidden p-8">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">Complete Your Professional Profile</h2>
+                    <p class="text-gray-600 mb-6">Help us match you with the perfect opportunities by providing your career details.</p>
+
+                    <form th:action="@{/jobseeker/profile-details}" method="post">
+
+                        <!-- Add the hidden input right here -->
+                        <input type="hidden" id="jobseekerId" name="jobseekerId" th:value="${jobseekerId}">
+
+                        <!-- Work Experience -->
+                        <div class="mb-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-3">Professional Experience</h3>
+
+                            <div class="mb-4">
+                                <label for="totalExperience" class="block text-sm font-medium text-gray-700 mb-1">Total Work Experience</label>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <select id="totalExperience" name="experienceYears" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 custom-select">
+                                            <option value="">Years</option>
+                                            <option value="0">0 years</option>
+                                            <option value="1">1 year</option>
+                                            <option value="2">2 years</option>
+                                            <option value="3">3 years</option>
+                                            <option value="4">4 years</option>
+                                            <option value="5">5 years</option>
+                                            <option value="6">6 years</option>
+                                            <option value="7">7 years</option>
+                                            <option value="8">8 years</option>
+                                            <option value="9">9 years</option>
+                                            <option value="10">10 years</option>
+                                            <option value="11">11 years</option>
+                                            <option value="12">12 years</option>
+                                            <option value="13">13 years</option>
+                                            <option value="14">14 years</option>
+                                            <option value="15+">15+ years</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <select id="experienceMonths" name="experienceMonths" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 custom-select">
+                                            <option value="">Months</option>
+                                            <option value="0">0 months</option>
+                                            <option value="1">1 month</option>
+                                            <option value="2">2 months</option>
+                                            <option value="3">3 months</option>
+                                            <option value="4">4 months</option>
+                                            <option value="5">5 months</option>
+                                            <option value="6">6 months</option>
+                                            <option value="7">7 months</option>
+                                            <option value="8">8 months</option>
+                                            <option value="9">9 months</option>
+                                            <option value="10">10 months</option>
+                                            <option value="11">11 months</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="currentCompany" class="block text-sm font-medium text-gray-700 mb-1">Current/Most Recent Company</label>
+                                <input type="text" id="currentCompany" name="currentCompany" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="Ex: Amazon, Google, etc.">
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="currentRole" class="block text-sm font-medium text-gray-700 mb-1">Current/Most Recent Job Title</label>
+                                <input type="text" id="currentRole" name="currentRole" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="Ex: Software Engineer, Product Manager">
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label for="currentCtc" class="block text-sm font-medium text-gray-700 mb-1">Current Annual CTC (₹)</label>
+                                    <input type="text" id="currentCtc" name="currentCtc" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="Ex: 1200000">
+                                </div>
+                                <div>
+                                    <label for="expectedCtc" class="block text-sm font-medium text-gray-700 mb-1">Expected Annual CTC (₹)</label>
+                                    <input type="text" id="expectedCtc" name="expectedCtc" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="Ex: 1500000">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Skills -->
+                        <div class="mb-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-3">Skills & Expertise</h3>
+
+                            <div class="mb-4">
+                                <label for="primarySkills" class="block text-sm font-medium text-gray-700 mb-1">Primary Skills (Add up to 5)</label>
+                                <div class="relative">
+                                    <input type="text" id="skillInput" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="Ex: Java, Python, React">
+                                    <button type="button" id="addSkillBtn" class="absolute right-2 top-2 text-green-600 hover:text-green-800">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div id="skillsContainer" class="flex flex-wrap gap-2 mt-2">
+                                    <!-- Skills will be added here dynamically -->
+                                </div>
+                                <input type="hidden" id="primarySkills" name="primarySkills" value="">
+                            </div>
+                        </div>
+
+                        <!-- Education -->
+                        <div class="mb-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-3">Education</h3>
+
+                            <div class="mb-4">
+                                <label for="highestEducation" class="block text-sm font-medium text-gray-700 mb-1">Highest Education</label>
+                                <select id="highestEducation" name="highestEducation" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 custom-select">
+                                    <option value="">Select highest qualification</option>
+                                    <option value="High School">High School</option>
+                                    <option value="Diploma">Diploma</option>
+                                    <option value="Bachelor's">Bachelor's Degree</option>
+                                    <option value="Master's">Master's Degree</option>
+                                    <option value="PhD">PhD</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="institution" class="block text-sm font-medium text-gray-700 mb-1">Institution/University</label>
+                                <input type="text" id="institution" name="institution" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="Ex: MIT, Stanford University">
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="fieldOfStudy" class="block text-sm font-medium text-gray-700 mb-1">Field of Study</label>
+                                <input type="text" id="fieldOfStudy" name="fieldOfStudy" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="Ex: Computer Science, Business Administration">
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label for="graduationYear" class="block text-sm font-medium text-gray-700 mb-1">Year of Graduation</label>
+                                    <select id="graduationYear" name="graduationYear" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 custom-select">
+                                        <option value="">Select year</option>
+                                        <!-- Generate years dynamically with JavaScript -->
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Location Preferences -->
+                        <div class="mb-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-3">Location Preferences</h3>
+
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Preferred Work Locations (Select up to 3)</label>
+                                <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="location-bangalore" name="preferredLocations" value="Bangalore" class="h-4 w-4 text-green-600 border-gray-300 rounded">
+                                        <label for="location-bangalore" class="ml-2 block text-sm text-gray-700">Bangalore</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="location-mumbai" name="preferredLocations" value="Mumbai" class="h-4 w-4 text-green-600 border-gray-300 rounded">
+                                        <label for="location-mumbai" class="ml-2 block text-sm text-gray-700">Mumbai</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="location-delhi" name="preferredLocations" value="Delhi/NCR" class="h-4 w-4 text-green-600 border-gray-300 rounded">
+                                        <label for="location-delhi" class="ml-2 block text-sm text-gray-700">Delhi/NCR</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="location-hyderabad" name="preferredLocations" value="Hyderabad" class="h-4 w-4 text-green-600 border-gray-300 rounded">
+                                        <label for="location-hyderabad" class="ml-2 block text-sm text-gray-700">Hyderabad</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="location-pune" name="preferredLocations" value="Pune" class="h-4 w-4 text-green-600 border-gray-300 rounded">
+                                        <label for="location-pune" class="ml-2 block text-sm text-gray-700">Pune</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="location-chennai" name="preferredLocations" value="Chennai" class="h-4 w-4 text-green-600 border-gray-300 rounded">
+                                        <label for="location-chennai" class="ml-2 block text-sm text-gray-700">Chennai</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Work Mode Preference</label>
+                                <div class="flex space-x-4">
+                                    <div class="flex items-center">
+                                        <input type="radio" id="remote" name="workMode" value="Remote" class="h-4 w-4 text-green-600 border-gray-300">
+                                        <label for="remote" class="ml-2 block text-sm text-gray-700">Remote</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="radio" id="onsite" name="workMode" value="Onsite" class="h-4 w-4 text-green-600 border-gray-300">
+                                        <label for="onsite" class="ml-2 block text-sm text-gray-700">Onsite</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="radio" id="hybrid" name="workMode" value="Hybrid" class="h-4 w-4 text-green-600 border-gray-300">
+                                        <label for="hybrid" class="ml-2 block text-sm text-gray-700">Hybrid</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+                        <!-- Submit Button -->
+                        <div class="flex justify-end">
+                            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white py-2 px-6 rounded-md transition-all">Continue</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-4 mt-12">
+        <div class="container mx-auto px-4 text-center text-gray-400 text-sm">
+            <p>© 2023 CareerConnect. All rights reserved.</p>
+        </div>
+    </footer>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Generate graduation years
+        const yearSelect = document.getElementById('graduationYear');
+        const currentYear = new Date().getFullYear();
+
+        for (let i = currentYear + 5; i >= currentYear - 40; i--) {
+            const option = document.createElement('option');
+            option.value = i;
+            option.textContent = i;
+            yearSelect.appendChild(option);
+        }
+
+        // Skills management
+        const skillInput = document.getElementById('skillInput');
+        const addSkillBtn = document.getElementById('addSkillBtn');
+        const skillsContainer = document.getElementById('skillsContainer');
+        const primarySkillsInput = document.getElementById('primarySkills');
+
+        let skills = [];
+
+        addSkillBtn.addEventListener('click', function() {
+            addSkill();
+        });
+
+        skillInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addSkill();
+            }
+        });
+
+        function addSkill() {
+            const skill = skillInput.value.trim();
+
+            if (skill && skills.length < 5 && !skills.includes(skill)) {
+                skills.push(skill);
+                updateSkillsDisplay();
+                updateSkillsInput();
+                skillInput.value = '';
+            }
+
+            if (skills.length >= 5) {
+                skillInput.disabled = true;
+                skillInput.placeholder = 'Maximum 5 skills added';
+            }
+        }
+
+        function removeSkill(skill) {
+            skills = skills.filter(s => s !== skill);
+            updateSkillsDisplay();
+            updateSkillsInput();
+
+            if (skills.length < 5) {
+                skillInput.disabled = false;
+                skillInput.placeholder = 'Ex: Java, Python, React';
+            }
+        }
+
+        function updateSkillsDisplay() {
+            skillsContainer.innerHTML = '';
+
+            skills.forEach(skill => {
+                const skillBadge = document.createElement('div');
+                skillBadge.className = 'bg-green-100 text-green-800 text-sm py-1 px-3 rounded-full flex items-center';
+                skillBadge.innerHTML = `
+                    ${skill}
+                    <button type="button" class="ml-2 text-green-600 hover:text-green-800 focus:outline-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                `;
+
+                skillBadge.querySelector('button').addEventListener('click', function() {
+                    removeSkill(skill);
+                });
+
+                skillsContainer.appendChild(skillBadge);
+            });
+        }
+
+        function updateSkillsInput() {
+            primarySkillsInput.value = skills.join(',');
+        }
+
+        // Location checkboxes (limit to 3)
+        const locationCheckboxes = document.querySelectorAll('input[name="preferredLocations"]');
+
+        locationCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const checkedCount = document.querySelectorAll('input[name="preferredLocations"]:checked').length;
+
+                if (checkedCount > 3) {
+                    this.checked = false;
+                }
+            });
+        });
+
+        // Form validation
+        const form = document.querySelector('form');
+        form.addEventListener('submit', function(e) {
+            const experienceYears = document.getElementById('totalExperience').value;
+            const highestEducation = document.getElementById('highestEducation').value;
+
+            if (!experienceYears || !highestEducation) {
+                e.preventDefault();
+                alert('Please fill in all required fields.');
+            }
+        });
+    });
+</script>
+</body>
+</html>

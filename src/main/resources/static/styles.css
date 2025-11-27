@@ -1,0 +1,63 @@
+/* src/main/resources/static/css/styles.css */
+:root {
+    --recruiter-color: #3b82f6;
+    --seeker-color: #10b981;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f8fafc;
+}
+
+/* Header styling */
+header {
+    padding: 0.5rem 0; /* Reduced padding */
+}
+
+header img {
+    width: 40px; /* Smaller logo */
+    height: auto;
+}
+
+/* Rest of your existing styles */
+.card-hover:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.transition-all {
+    transition: all 0.3s ease;
+}
+
+.login-type-card {
+    cursor: pointer;
+    border: 2px solid transparent;
+}
+
+.login-type-card.active {
+    border-color: currentColor;
+}
+
+.recruiter-bg {
+    background-color: rgba(59, 130, 246, 0.05);
+}
+
+.seeker-bg {
+    background-color: rgba(16, 185, 129, 0.05);
+}
+
+.recruiter-text {
+    color: var(--recruiter-color);
+}
+
+.seeker-text {
+    color: var(--seeker-color);
+}
+
+.recruiter-border {
+    border-color: var(--recruiter-color);
+}
+
+.seeker-border {
+    border-color: var(--seeker-color);
+}

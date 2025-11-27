@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - CareerConnect</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8fafc;
+        }
+        .seeker-text { color: #10b981; }
+        .seeker-bg { background-color: rgba(16, 185, 129, 0.05); }
+        .transition-all { transition: all 0.3s ease; }
+    </style>
+</head>
+<body>
+<div class="min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="bg-white shadow-sm py-2">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <div class="flex items-center">
+                <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/c770719f-859b-4ee4-86b5-32aa7a948a55.png"
+                     alt="CareerConnect logo" class="mr-2" style="width: 80px; height: auto;">
+                <h1 class="text-lg font-bold text-gray-800">CareerConnect</h1>
+            </div>
+            <nav>
+                <ul class="flex space-x-6">
+                    <li><a th:href="@{/}" class="text-gray-600 hover:text-gray-900 transition-all">Home</a></li>
+                    <li><a href="#" class="text-gray-600 hover:text-gray-900 transition-all">About</a></li>
+                    <li><a href="#" class="text-gray-600 hover:text-gray-900 transition-all">Contact</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow py-8">
+        <div class="container mx-auto px-4">
+            <div class="mb-8">
+                <h1 class="text-2xl font-bold text-gray-800">Welcome, <span th:text="${jobseeker.fullName}">John</span>!</h1>
+                <p class="text-gray-600">Here's your career dashboard</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Main Stats Panel -->
+                <div class="md:col-span-2 bg-white rounded-xl shadow-md overflow-hidden">
+                    <div class="p-6">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4">Your Profile Status</h2>
+
+                        <div class="mb-6">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-medium text-gray-700">Profile Completion</span>
+                                <span class="text-sm font-medium text-green-600">80%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                <div class="bg-green-600 h-2.5 rounded-full" style="width: 80%"></div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h3 class="font-medium text-gray-700 mb-1">Profile Views</h3>
+                                <p class="text-xl font-bold">12</p>
+                                <p class="text-xs text-gray-500">Last 30 days</p>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h3 class="font-medium text-gray-700 mb-1">Job Applications</h3>
+                                <p class="text-xl font-bold">5</p>
+                                <p class="text-xs text-gray-500">Last 30 days</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Profile Card -->
+                <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                    <div class="p-6">
+                        <div class="flex items-center mb-4">
+                            <div class="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center mr-3">
+                                <span class="text-green-600 font-bold text-lg" th:text="${#strings.substring(jobseeker.fullName,0,1)}">J</span>
+                            </div>
+                            <div>
+                                <h2 class="text-lg font-semibold text-gray-800" th:text="${jobseeker.fullName}">John Doe</h2>
+                                <p class="text-sm text-gray-600" th:text="${jobseeker.email}">john.doe@example.com</p>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-gray-200 pt-4">
+                            <a href="#" class="text-green-600 hover:text-green-800 text-sm font-medium flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                </svg>
+                                Edit Profile
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Job Applications -->
+            <div class="mt-8 bg-white rounded-xl shadow-md overflow-hidden">
+                <div class="p-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Recent Applications</h2>
+
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between pb-4 border-b border-gray-100">
+                            <div>
+                                <h3 class="font-medium text-gray-800">Senior Software Engineer</h3>
+                                <p class="text-gray-600 text-sm">Tech Solutions Inc.</p>
+                            </div>
+                            <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">In Review</span>
+                        </div>
+
+                        <div class="flex items-center justify-between pb-4 border-b border-gray-100">
+                            <div>
+                                <h3 class="font-medium text-gray-800">Product Manager</h3>
+                                <p class="text-gray-600 text-sm">Innovation Labs</p>
+                            </div>
+                            <span class="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded">Interview</span>
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="font-medium text-gray-800">UX Designer</h3>
+                                <p class="text-gray-600 text-sm">Example Company</p>
+                            </div>
+                            <span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded">New</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recommended Jobs (Dynamic Section) -->
+            <div class="mt-8 bg-white rounded-xl shadow-md overflow-hidden" th:if="${recommendedJobs != null && !recommendedJobs.empty}">
+                <div class="p-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Recommended Jobs</h2>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div th:each="job : ${recommendedJobs}" class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all">
+                            <h3 class="font-medium text-gray-800" th:text="${job.title}">Senior Developer</h3>
+                            <p class="text-gray-600 text-sm" th:text="${job.companyName}">Tech Company</p>
+                            <div class="flex mt-2 space-x-2">
+                                <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-0.5 rounded" th:text="${job.location}">Remote</span>
+                                <span class="bg-purple-100 text-purple-800 text-xs font-medium px-2 py-0.5 rounded" th:text="${job.employmentType}">Full-time</span>
+                            </div>
+                            <p class="mt-2 text-sm text-gray-500" th:text="${#strings.abbreviate(job.description, 100)}">Description text here...</p>
+                            <div class="mt-3">
+                                <a th:href="@{'/jobs/' + ${job.id}}" class="text-green-600 hover:text-green-800 text-sm font-medium">View Details →</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-4 mt-auto">
+        <div class="container mx-auto px-4 text-center text-gray-400 text-sm">
+            <p>© 2023 CareerConnect. All rights reserved.</p>
+        </div>
+    </footer>
+</div>
+</body>
+</html>
