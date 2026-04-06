@@ -1,0 +1,13 @@
+<h2>Candidates</h2>
+
+<div th:each="c : ${candidates}">
+    <p>
+        <span th:text="${c.jobseeker.fullName}"></span>
+        <span th:text="${c.skills}"></span>
+
+    <form method="post"
+          th:action="@{'/recruiter/jobs/' + ${job.id} + '/invite/' + ${c.jobseeker.id}}">
+        <button>Invite</button>
+    </form>
+    </p>
+</div>

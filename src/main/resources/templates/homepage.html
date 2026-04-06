@@ -1,247 +1,418 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CareerConnect - Job Portal</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>JobApp - Top 1% Tech Talent Marketplace</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
     <style>
         :root {
-            --recruiter-color: #3b82f6;
-            --seeker-color: #10b981;
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --secondary: #10b981;
+            --dark: #111827;
+            --light: #f3f4f6;
+            --text: #4b5563;
         }
 
         body {
-            font-family: 'Poppins', sans-serif;
-            background-color: #f8fafc;
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            color: var(--text);
+            overflow-x: hidden;
         }
 
-        .card-hover:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-        }
-
-        .transition-all {
+        /* Navbar */
+        .navbar {
+            padding: 1.25rem 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0,0,0,0.05);
             transition: all 0.3s ease;
         }
-
-        .login-type-card {
-            cursor: pointer;
-            border: 2px solid transparent;
+        .navbar-brand {
+            font-weight: 800;
+            font-size: 1.5rem;
+            color: var(--primary);
+            letter-spacing: -0.5px;
+        }
+        .nav-link {
+            font-weight: 500;
+            color: var(--dark);
+            margin: 0 0.5rem;
+        }
+        .nav-link:hover { color: var(--primary); }
+        .btn-nav-login {
+            font-weight: 600;
+            color: var(--dark);
+            border: none;
+            padding: 0.5rem 1rem;
+        }
+        .btn-nav-login:hover { color: var(--primary); background: transparent; }
+        .btn-nav-signup {
+            font-weight: 600;
+            background: var(--primary);
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: 0.5rem;
+            color: white;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-nav-signup:hover {
+            background: var(--primary-hover);
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(79, 70, 229, 0.2);
         }
 
-        .login-type-card.active {
-            border-color: currentColor;
+        /* Hero Section */
+        .hero {
+            padding: 8rem 0 5rem 0;
+            background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%);
+            position: relative;
+        }
+        .hero::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 100px;
+            background: linear-gradient(to top, white, transparent);
+        }
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: var(--dark);
+            line-height: 1.2;
+            letter-spacing: -1px;
+            margin-bottom: 1.5rem;
+        }
+        .hero-title span {
+            background: linear-gradient(to right, var(--primary), #c026d3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: var(--text);
+            margin-bottom: 2.5rem;
+            line-height: 1.6;
+            max-width: 600px;
+        }
+        .btn-hero {
+            padding: 1rem 2rem;
+            font-weight: 700;
+            font-size: 1.1rem;
+            border-radius: 0.5rem;
+            transition: all 0.3s;
+            border: none;
+        }
+        .btn-hero-primary {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
+        }
+        .btn-hero-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(79, 70, 229, 0.4);
+            color: white;
+        }
+        .btn-hero-secondary {
+            background: white;
+            color: var(--dark);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            border: 1px solid #e5e7eb;
+        }
+        .btn-hero-secondary:hover {
+            background: #f9fafb;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
         }
 
-        .recruiter-bg {
-            background-color: rgba(59, 130, 246, 0.05);
+        .hero-stats {
+            display: flex;
+            gap: 2rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(0,0,0,0.1);
         }
+        .stat-item h4 { font-weight: 800; color: var(--dark); font-size: 1.5rem; margin:0; }
+        .stat-item p { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; color: #6b7280; margin:0; }
 
-        .seeker-bg {
-            background-color: rgba(16, 185, 129, 0.05);
-        }
+        /* Features Section */
+        .features { padding: 6rem 0; background: white; }
+        .section-header { text-align: center; margin-bottom: 4rem; }
+        .section-header h2 { font-weight: 800; color: var(--dark); font-size: 2.5rem; }
+        .section-header p { font-size: 1.1rem; color: #6b7280; max-width: 600px; margin: 1rem auto 0; }
 
-        .recruiter-text {
-            color: var(--recruiter-color);
+        .feature-card {
+            padding: 2rem;
+            border-radius: 1rem;
+            background: var(--light);
+            border: 1px solid transparent;
+            transition: all 0.3s;
+            height: 100%;
         }
+        .feature-card:hover {
+            background: white;
+            border-color: #e5e7eb;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.05);
+            transform: translateY(-5px);
+        }
+        .feature-icon {
+            width: 60px; height: 60px;
+            background: #e0e7ff;
+            color: var(--primary);
+            border-radius: 1rem;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .feature-card h4 { font-weight: 700; color: var(--dark); margin-bottom: 1rem; }
+        .feature-card p { line-height: 1.6; color: #6b7280; margin: 0; }
 
-        .seeker-text {
-            color: var(--seeker-color);
+        /* How it works */
+        .how-it-works { padding: 6rem 0; background: #fafafa; }
+        .step-number {
+            font-size: 4rem;
+            font-weight: 900;
+            color: #e5e7eb;
+            line-height: 1;
+            margin-bottom: -1.5rem;
+            position: relative;
+            z-index: 0;
         }
+        .step-content {
+            position: relative;
+            z-index: 1;
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            border: 1px solid #f3f4f6;
+        }
+        .step-content h4 { font-weight: 700; color: var(--dark); margin-bottom: 0.5rem; }
 
-        .recruiter-border {
-            border-color: var(--recruiter-color);
+        /* Footer */
+        .footer {
+            background: var(--dark);
+            color: white;
+            padding: 4rem 0 2rem;
         }
-
-        .seeker-border {
-            border-color: var(--seeker-color);
-        }
+        .footer-brand { font-weight: 800; font-size: 1.5rem; color: white; margin-bottom: 1rem; display: block; text-decoration: none; }
+        .footer-text { color: #9ca3af; font-size: 0.95rem; line-height: 1.6; }
+        .footer-links { list-style: none; padding: 0; }
+        .footer-links li { margin-bottom: 0.75rem; }
+        .footer-links a { color: #9ca3af; text-decoration: none; transition: color 0.2s; }
+        .footer-links a:hover { color: white; }
+        .footer-bottom { border-top: 1px solid #374151; margin-top: 3rem; padding-top: 2rem; text-align: center; color: #6b7280; font-size: 0.9rem; }
     </style>
 </head>
 <body>
-<div class="min-h-screen flex flex-col">
-    <!-- Header -->
-    <header class="bg-white shadow-sm py-2">
-        <div class="container mx-auto px-4 flex justify-between items-center">
-            <div class="flex items-center">
-                <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/c770719f-859b-4ee4-86b5-32aa7a948a55.png"
-                     alt="CareerConnect logo"
-                     class="mr-2"
-                     style="width: 80px; height: auto;">
-                <h1 class="text-xl font-bold text-gray-800">CareerConnect</h1>
+
+<!-- Navigation -->
+<nav class="navbar navbar-expand-lg fixed-top">
+    <div class="container">
+        <a class="navbar-brand" href="/">JobApp</a>
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav mx-auto">
+                <li class="nav-item"><a class="nav-link" href="#how-it-works">How it Works</a></li>
+                <li class="nav-item"><a class="nav-link" href="/jobs">Browse Jobs</a></li>
+                <li class="nav-item"><a class="nav-link" href="/recruiter/register">For Employers</a></li>
+            </ul>
+            <div class="d-flex align-items-center gap-2 mt-3 mt-lg-0">
+                <a href="/jobseeker/login" class="btn btn-nav-login">Log In</a>
+                <a href="/jobseeker/register" class="btn btn-nav-signup">Sign Up</a>
             </div>
-            <nav>
-                <ul class="flex space-x-6">
-                    <li><a href="#" class="text-gray-600 hover:text-gray-900 transition-all">Home</a></li>
-                    <li><a href="#" class="text-gray-600 hover:text-gray-900 transition-all">About</a></li>
-                    <li><a href="#" class="text-gray-600 hover:text-gray-900 transition-all">Contact</a></li>
+        </div>
+    </div>
+</nav>
+
+<!-- Hero Section -->
+<section class="hero">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6 z-1">
+                <h1 class="hero-title">Where top tech talent meets <span>great companies</span>.</h1>
+                <p class="hero-subtitle">Skip the noise. Create a profile once and let companies apply to you with upfront salary offers. 100% free for jobseekers.</p>
+                <div class="d-flex flex-wrap gap-3">
+                    <a href="/jobseeker/register" class="btn btn-hero btn-hero-primary">Apply to top companies</a>
+                    <a href="/recruiter/register" class="btn btn-hero btn-hero-secondary">Hire talent</a>
+                </div>
+
+                <div class="hero-stats">
+                    <div class="stat-item">
+                        <h4>5,000+</h4>
+                        <p>Tech Jobs</p>
+                    </div>
+                    <div class="stat-item">
+                        <h4>1,200+</h4>
+                        <p>Startups & MNCs</p>
+                    </div>
+                    <div class="stat-item">
+                        <h4>₹25L+</h4>
+                        <p>Avg CTC</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 mt-5 mt-lg-0 d-none d-md-block position-relative">
+                <!-- Abstract visual representation of a profile matching -->
+                <div style="background: white; padding: 2rem; border-radius: 1.5rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.1); position: relative; z-index: 2; transform: rotate(-2deg);">
+                    <div class="d-flex align-items-center gap-3 mb-4 pb-4 border-bottom">
+                        <div style="width:60px; height:60px; background:#e0e7ff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.5rem; color:#4f46e5;"><i class="fas fa-user"></i></div>
+                        <div>
+                            <h5 class="fw-bold mb-1">Senior Backend Engineer</h5>
+                            <p class="text-muted mb-0 small">Java, Spring Boot, Microservices</p>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3 p-3 bg-light rounded">
+                        <div class="d-flex align-items-center gap-2"><i class="fas fa-building text-primary"></i> <span class="fw-medium">Fintech Unicorn</span></div>
+                        <span class="badge bg-success bg-opacity-25 text-success rounded-pill px-3 py-2">Interview Request</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3 p-3 bg-light rounded">
+                        <div class="d-flex align-items-center gap-2"><i class="fas fa-building text-primary"></i> <span class="fw-medium">Series B Startup</span></div>
+                        <span class="badge bg-success bg-opacity-25 text-success rounded-pill px-3 py-2">Interview Request</span>
+                    </div>
+                    <div class="mt-4">
+                        <div class="small fw-bold text-muted text-uppercase mb-2">Upfront Salary Offers</div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-primary" role="progressbar" style="width: 75%"></div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-2 small fw-bold">
+                            <span>₹30L</span>
+                            <span>₹45L</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features -->
+<section class="features">
+    <div class="container">
+        <div class="section-header">
+            <h2>A better way to find a job</h2>
+            <p>JobApp reverses the traditional job search process. You set your preferences, and companies reach out to you.</p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-eye-slash"></i></div>
+                    <h4>Private by Default</h4>
+                    <p>Your profile is hidden from your current employer. You only share your details with companies you approve.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-rupee-sign"></i></div>
+                    <h4>Upfront Salary</h4>
+                    <p>No more guessing games. See the salary range, tech stack, and role details before you accept an interview.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-bolt"></i></div>
+                    <h4>No Spam</h4>
+                    <p>We strictly curate companies. Only tech-first product companies with verified funding can contact you.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How it works -->
+<section id="how-it-works" class="how-it-works">
+    <div class="container">
+        <div class="section-header">
+            <h2>How JobApp works</h2>
+            <p>Three simple steps to your next big career move.</p>
+        </div>
+
+        <div class="row g-5">
+            <div class="col-md-4">
+                <div class="step-number">01</div>
+                <div class="step-content">
+                    <h4>Create your profile</h4>
+                    <p class="text-muted">Tell us about your experience, tech stack, and what you're looking for next. Takes 5 minutes.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="step-number">02</div>
+                <div class="step-content">
+                    <h4>Get interview requests</h4>
+                    <p class="text-muted">Companies review your profile and send you interview requests with salary details included upfront.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="step-number">03</div>
+                <div class="step-content">
+                    <h4>Accept & get hired</h4>
+                    <p class="text-muted">Accept the requests you like, crush the interviews, and get hired. Plus, earn a joining bonus!</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-5 pt-4">
+            <a href="/jobseeker/register" class="btn btn-hero-primary px-5 py-3 rounded-pill fw-bold">Create your profile now <i class="fas fa-arrow-right ms-2"></i></a>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-lg-4 pe-lg-5">
+                <a href="#" class="footer-brand">JobApp</a>
+                <p class="footer-text">The premium tech talent marketplace connecting India's top 1% developers with leading product companies.</p>
+            </div>
+            <div class="col-lg-2 col-md-4">
+                <h5 class="text-white mb-3 fw-bold">For Candidates</h5>
+                <ul class="footer-links">
+                    <li><a href="/jobseeker/register">Create Profile</a></li>
+                    <li><a href="/jobs">Browse Jobs</a></li>
+                    <li><a href="/jobseeker/login">Login</a></li>
                 </ul>
-            </nav>
-        </div>
-    </header>
-
-    <!-- Main Content -->
-    <main class="flex-grow flex items-center justify-center py-12">
-        <div class="container mx-auto px-4">
-            <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-md overflow-hidden transition-all">
-                <div class="md:flex">
-                    <!-- Left Side - Image -->
-                    <div class="md:w-1/2 bg-cover bg-center" style="background-image: url('https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/9a0e083e-5b5e-4bf8-b097-b7649e6116eb.png');">
-                        <div class="h-full bg-black bg-opacity-40 flex items-center justify-center p-8">
-                            <div>
-                                <h2 class="text-3xl font-bold text-white mb-4">Find Your Perfect Match</h2>
-                                <p class="text-white opacity-90">Connecting top talent with world-class companies</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Right Side - Login Options -->
-                    <div class="md:w-1/2 p-8">
-                        <h2 class="text-2xl font-bold text-gray-800 mb-8 text-center">Welcome to CareerConnect</h2>
-
-                        <p class="text-gray-600 mb-8 text-center">Please select your login type:</p>
-
-                        <div class="grid grid-cols-2 gap-4 mb-8">
-                            <!-- Recruiter Option -->
-                            <div id="recruiter-card" class="login-type-card recruiter-bg recruiter-text recruiter-border p-4 rounded-lg text-center transition-all active">
-                                <div class="mb-2">
-                                    <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/20521002-73c6-4fe7-b33f-7cce31348f0a.png" alt="Recruiter icon - business professional holding a clipboard" class="mx-auto">
-                                </div>
-                                <h3 class="font-medium mb-1">Recruiter</h3>
-                                <p class="text-xs text-gray-500">Post jobs and find candidates</p>
-                            </div>
-
-                            <!-- Job Seeker Option -->
-                            <div id="seeker-card" class="login-type-card seeker-bg seeker-text seeker-border p-4 rounded-lg text-center transition-all">
-                                <div class="mb-2">
-                                    <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/326e795d-6c86-410e-9a90-4e125ed6f662.png" alt="Job seeker icon - person with resume and briefcase" class="mx-auto">
-                                </div>
-                                <h3 class="font-medium mb-1">Job Seeker</h3>
-                                <p class="text-xs text-gray-500">Find your dream job</p>
-                            </div>
-                        </div>
-
-                        <!-- Recruiter Login Form (Default Visible) -->
-                        <div id="recruiter-form" class="transition-all">
-                            <h3 class="text-lg font-semibold mb-4 recruiter-text text-center">Recruiter Login</h3>
-                            <form th:action="@{/recruiter/login}" method="post">
-                                <div class="mb-4">
-                                    <label for="recruiter-email" class="block text-sm font-medium text-gray-700 mb-1">Company Email</label>
-                                    <input type="email" id="recruiter-email" name="email" th:value="${email}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="your@company.com" required>
-                                </div>
-                                <div class="mb-6">
-                                    <label for="recruiter-password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                                    <input type="password" id="recruiter-password" name="password" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="••••••••" required>
-                                </div>
-                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-all">Login as Recruiter</button>
-                            </form>
-                            <div class="mt-4 text-center text-sm">
-                                <a href="#" class="text-blue-600 hover:text-blue-800">Forgot password?</a>
-                                <span class="mx-2 text-gray-400">|</span>
-                                <a th:href="@{/recruiter/register}" class="text-blue-600 hover:text-blue-800">Register as recruiter</a>
-                            </div>
-                        </div>
-
-                        <!-- Job Seeker Login Form (Hidden by Default) -->
-                        <div id="seeker-form" class="transition-all hidden">
-                            <h3 class="text-lg font-semibold mb-4 seeker-text text-center">Job Seeker Login</h3>
-                            <form th:action="@{/jobseeker/login}" method="post">
-                                <div class="mb-4">
-                                    <label for="seeker-email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                                    <input type="email" id="seeker-email" name="email" th:value="${email}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="you@example.com" required>
-                                </div>
-                                <div class="mb-6">
-                                    <label for="seeker-password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                                    <input type="password" id="seeker-password" name="password" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="••••••••" required>
-                                </div>
-                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                                <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md transition-all">Login as Job Seeker</button>
-                            </form>
-                            <div class="mt-4 text-center text-sm">
-                                <a href="#" class="text-green-600 hover:text-green-800">Forgot password?</a>
-                                <span class="mx-2 text-gray-400">|</span>
-                                <a th:href="@{/jobseeker/register}" class="text-green-600 hover:text-green-800">Register as job seeker</a>
-                            </div>
-                        </div>
-                    </div>
+            </div>
+            <div class="col-lg-2 col-md-4">
+                <h5 class="text-white mb-3 fw-bold">For Employers</h5>
+                <ul class="footer-links">
+                    <li><a href="/recruiter/register">Hire Talent</a></li>
+                    <li><a href="/recruiter/login">Employer Login</a></li>
+                    <li><a href="#">Pricing</a></li>
+                </ul>
+            </div>
+            <div class="col-lg-4 col-md-4">
+                <h5 class="text-white mb-3 fw-bold">Contact</h5>
+                <p class="footer-text mb-2"><i class="fas fa-envelope me-2"></i> hello@jobapp.com</p>
+                <div class="d-flex gap-3 mt-4">
+                    <a href="#" class="text-white opacity-75 fs-4"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="text-white opacity-75 fs-4"><i class="fab fa-linkedin"></i></a>
+                    <a href="#" class="text-white opacity-75 fs-4"><i class="fab fa-github"></i></a>
                 </div>
             </div>
         </div>
-    </main>
-
-    <!-- Footer -->
-    <footer class="bg-gray-800 text-white py-8">
-        <div class="container mx-auto px-4">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div>
-                    <h3 class="text-lg font-semibold mb-4">CareerConnect</h3>
-                    <p class="text-gray-400">Connecting talent with opportunity since 2023.</p>
-                </div>
-                <div>
-                    <h3 class="text-lg font-semibold mb-4">Quick Links</h3>
-                    <ul class="space-y-2">
-                        <li><a href="#" class="text-gray-400 hover:text-white transition-all">About Us</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white transition-all">Privacy Policy</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white transition-all">Terms of Service</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h3 class="text-lg font-semibold mb-4">Contact Us</h3>
-                    <address class="not-italic text-gray-400">
-                        123 Career Street<br>
-                        San Francisco, CA 94107<br>
-                        <a href="mailto:hello@careerconnect.com" class="hover:text-white transition-all">hello@careerconnect.com</a>
-                    </address>
-                </div>
-            </div>
-            <div class="border-t border-gray-700 mt-8 pt-6 text-center text-gray-400">
-                <p>© 2023 CareerConnect. All rights reserved.</p>
-            </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 JobApp Inc. All rights reserved. Designed for MVP.</p>
         </div>
-    </footer>
-</div>
+    </div>
+</footer>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const recruiterCard = document.getElementById('recruiter-card');
-        const seekerCard = document.getElementById('seeker-card');
-        const recruiterForm = document.getElementById('recruiter-form');
-        const seekerForm = document.getElementById('seeker-form');
-
-        // Activate job seeker option
-        seekerCard.addEventListener('click', function() {
-            recruiterCard.classList.remove('active');
-            seekerCard.classList.add('active');
-            recruiterForm.classList.add('hidden');
-            seekerForm.classList.remove('hidden');
-        });
-
-        // Activate recruiter option
-        recruiterCard.addEventListener('click', function() {
-            seekerCard.classList.remove('active');
-            recruiterCard.classList.add('active');
-            seekerForm.classList.add('hidden');
-            recruiterForm.classList.remove('hidden');
-        });
-
-        // Form validation
-        document.querySelectorAll('form').forEach(form => {
-            form.addEventListener('submit', function(e) {
-                const email = this.querySelector('input[type="email"]').value;
-                const password = this.querySelector('input[type="password"]').value;
-
-                if (!email || !password) {
-                    e.preventDefault();
-                    alert('Please fill in all fields');
-                    return;
-                }
-
-                // Allow form to submit naturally
-            });
-        });
+    // Add background to navbar on scroll
+    window.addEventListener('scroll', function() {
+        if (window.scrollY > 50) {
+            document.querySelector('.navbar').style.boxShadow = '0 4px 6px -1px rgba(0,0,0,0.05)';
+        } else {
+            document.querySelector('.navbar').style.boxShadow = 'none';
+        }
     });
 </script>
 </body>

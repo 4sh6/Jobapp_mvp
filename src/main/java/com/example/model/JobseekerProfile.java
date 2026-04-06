@@ -1,17 +1,13 @@
 package com.example.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "jobseeker_profiles")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class JobseekerProfile {
+
     @Id
+    @Column(name = "jobseeker_id")
     private Long id;
 
     @OneToOne
@@ -19,26 +15,162 @@ public class JobseekerProfile {
     @JoinColumn(name = "jobseeker_id")
     private Jobseeker jobseeker;
 
+    @Column(name = "profile_headline", length = 500)
+    private String profileHeadline;
+
+    @Column(name = "about", columnDefinition = "TEXT")
+    private String about;
+
+    @Column(name = "experience_years")
     private Integer experienceYears;
+
+    @Column(name = "experience_months")
     private Integer experienceMonths;
+
+    @Column(name = "current_company")
     private String currentCompany;
 
-    @Column(name = "current_jobposition")
+    @Column(name = "past_companies", length = 1000)
+    private String pastCompanies;
+
+    @Column(name = "\"current_role\"")
     private String currentRole;
 
+    @Column(name = "current_ctc")
     private Double currentCtc;
+
+    @Column(name = "expected_ctc")
     private Double expectedCtc;
 
-    @Column(length = 500)
     private String skills;
 
+    @Column(name = "primary_skills", length = 1000)
+    private String primarySkills;
+
+    @Column(name = "highest_education")
     private String highestEducation;
+
     private String institution;
+
+    @Column(name = "field_of_study")
     private String fieldOfStudy;
+
+    @Column(name = "graduation_year")
     private Integer graduationYear;
 
-    @Column(length = 500)
+    @Column(name = "preferred_locations")
     private String preferredLocations;
 
+    @Column(name = "work_mode")
     private String workMode;
+
+    @Column(name = "notice_period_days")
+    private Integer noticePeriodDays;
+
+    // Getters and Setters
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Jobseeker getJobseeker() {
+        return jobseeker;
+    }
+
+    public void setJobseeker(Jobseeker jobseeker) {
+        this.jobseeker = jobseeker;
+    }
+
+    public String getProfileHeadline() {
+        return profileHeadline;
+    }
+
+    public void setProfileHeadline(String profileHeadline) {
+        this.profileHeadline = profileHeadline;
+    }
+
+    public String getAbout() {
+        return about;
+    }
+
+    public void setAbout(String about) {
+        this.about = about;
+    }
+
+    public Integer getExperienceYears() {
+        return experienceYears;
+    }
+
+    public void setExperienceYears(Integer experienceYears) {
+        this.experienceYears = experienceYears;
+    }
+
+    public Integer getExperienceMonths() {
+        return experienceMonths;
+    }
+
+    public void setExperienceMonths(Integer experienceMonths) {
+        this.experienceMonths = experienceMonths;
+    }
+
+    public String getCurrentCompany() {
+        return currentCompany;
+    }
+
+    public void setCurrentCompany(String currentCompany) {
+        this.currentCompany = currentCompany;
+    }
+
+    public String getPastCompanies() {
+        return pastCompanies;
+    }
+
+    public void setPastCompanies(String pastCompanies) {
+        this.pastCompanies = pastCompanies;
+    }
+
+    public String getCurrentRole() {
+        return currentRole;
+    }
+
+    public void setCurrentRole(String currentRole) {
+        this.currentRole = currentRole;
+    }
+
+    public Double getCurrentCtc() { return currentCtc; }
+    public void setCurrentCtc(Double currentCtc) { this.currentCtc = currentCtc; }
+
+    public Double getExpectedCtc() { return expectedCtc; }
+    public void setExpectedCtc(Double expectedCtc) { this.expectedCtc = expectedCtc; }
+
+    public String getSkills() { return skills; }
+    public void setSkills(String skills) { this.skills = skills; }
+
+    public String getPrimarySkills() { return primarySkills; }
+    public void setPrimarySkills(String primarySkills) { this.primarySkills = primarySkills; }
+
+    public String getHighestEducation() { return highestEducation; }
+    public void setHighestEducation(String highestEducation) { this.highestEducation = highestEducation; }
+
+    public String getInstitution() { return institution; }
+    public void setInstitution(String institution) { this.institution = institution; }
+
+    public String getFieldOfStudy() { return fieldOfStudy; }
+    public void setFieldOfStudy(String fieldOfStudy) { this.fieldOfStudy = fieldOfStudy; }
+
+    public Integer getGraduationYear() { return graduationYear; }
+    public void setGraduationYear(Integer graduationYear) { this.graduationYear = graduationYear; }
+
+    public String getPreferredLocations() { return preferredLocations; }
+    public void setPreferredLocations(String preferredLocations) { this.preferredLocations = preferredLocations; }
+
+    public String getWorkMode() { return workMode; }
+    public void setWorkMode(String workMode) { this.workMode = workMode; }
+
+    public Integer getNoticePeriodDays() { return noticePeriodDays; }
+    public void setNoticePeriodDays(Integer noticePeriodDays) { this.noticePeriodDays = noticePeriodDays; }
 }

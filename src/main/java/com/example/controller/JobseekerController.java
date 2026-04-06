@@ -1,40 +1,39 @@
 package com.example.controller;
-import com.example.model.Job;
-import com.example.model.Jobseeker;
-import com.example.model.JobseekerProfile;
-import com.example.model.Resume; // Add this import
+import java.security.Principal;
+
+import com.example.dto.JobseekerProfileDto;
+import com.example.dto.JobseekerRegistrationDto;
+import com.example.dto.ResumeUploadDto;
+import com.example.model.*;
+import com.example.repositary.JobInviteRepository;
+import com.example.service.*;
 import com.example.repositary.JobseekerProfileRepository;
 import com.example.repositary.JobseekerRepository;
 import com.example.repositary.ResumeRepository;
-import com.example.service.EmailService;
-import com.example.service.JobRecommendationService;
+import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File; // Add this import
+import com.example.service.PasswordResetService;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import jakarta.servlet.http.HttpSession;
-
-import java.security.Principal;
-import java.util.HashMap;
+import java.nio.file.*;
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
-import java.util.Random;
-
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/jobseeker")
 public class JobseekerController {
 
     @Autowired
-    private EmailService emailService;
+    private JobseekerService jobseekerService;
 
     @Autowired
     private JobseekerRepository jobseekerRepository;
@@ -46,251 +45,600 @@ public class JobseekerController {
     private ResumeRepository resumeRepository;
 
     @Autowired
-    private JobRecommendationService jobRecommendationService;
+    private JobRecommendationService recommendationService;
 
-    // File storage location
-    private final String uploadDir = "./uploads/resumes";
+    @Autowired
+    private JobService jobService;
 
+    @Autowired
+    private ApplicationService applicationService;
+
+    @Autowired
+    private OtpService otpService;
+
+    @Autowired
+    private OnboardingService onboardingService;
+
+    @Autowired
+    private JobInviteRepository inviteRepository;
+
+    @Autowired
+    private FileStorageService fileStorageService;
+
+    @Autowired
+    private PasswordResetService passwordResetService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @GetMapping("/register")
-    public String showRegisterForm(Model model) {
-        model.addAttribute("jobseeker", new Jobseeker());
+    public String showRegisterForm(@RequestParam(required = false) String email,
+                                   @RequestParam(required = false) String error,
+                                   Model model) {
+        JobseekerRegistrationDto dto = new JobseekerRegistrationDto();
+        if (email != null) {
+            dto.setEmail(email);
+        }
+        model.addAttribute("jobseekerRegistrationDto", dto);
+        if (error != null) {
+            model.addAttribute("error", error);
+        }
         return "jobseeker/register";
     }
 
     @PostMapping("/register")
-    public String registerJobseeker(Jobseeker jobseeker, HttpSession session) {
-
-        // Save the jobseeker to the database
-        jobseekerRepository.save(jobseeker);
-
-        // Store jobseeker ID in session for later use
-        session.setAttribute("jobseekerId", jobseeker.getId());
-
-        return "redirect:/jobseeker/profile-details";
+    public String registerJobseeker(@ModelAttribute("jobseekerRegistrationDto") @Valid JobseekerRegistrationDto dto,
+                                    BindingResult result,
+                                    Model model) {
+        if (result.hasErrors()) {
+            return "jobseeker/register";
+        }
+        try {
+            Jobseeker created = jobseekerService.registerJobseeker(dto);
+            otpService.generateAndSendOtp(created.getEmail());
+            model.addAttribute("email", created.getEmail());
+            return "jobseeker/verify-otp";
+        } catch (IllegalArgumentException ex) {
+            model.addAttribute("error", ex.getMessage());
+            return "jobseeker/register";
+        }
     }
 
-    @GetMapping("/profile-details")
-    public String showProfileDetailsForm(HttpSession session, Model model) {
-        Long jobseekerId = (Long) session.getAttribute("jobseekerId");
-        if (jobseekerId == null) {
-            return "redirect:/jobseeker/register";
-        }
-
-        model.addAttribute("jobseekerId", jobseekerId);
-        return "jobseeker/profiledetails";
-    }
-
-    @PostMapping("/profile-details")
-    public String saveProfileDetails(@RequestParam Map<String, String> formData, HttpSession session) {
-        // First try to get jobseekerId from session
-        Long jobseekerId = (Long) session.getAttribute("jobseekerId");
-
-        // If not in session, try to get from form data
-        if (jobseekerId == null && formData.containsKey("jobseekerId")) {
-            try {
-                jobseekerId = Long.parseLong(formData.get("jobseekerId"));
-            } catch (NumberFormatException e) {
-                // Handle parsing error properly
-                return "redirect:/jobseeker/register";
-            }
-        }
-
-        if (jobseekerId == null) {
-            return "redirect:/jobseeker/register";
-        }
-
-        // Get the jobseeker
-        Jobseeker jobseeker = jobseekerRepository.findById(jobseekerId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        // Create and populate profile
-        JobseekerProfile profile = new JobseekerProfile();
-        profile.setJobseeker(jobseeker);
-
-        // Parse and set form data
-        profile.setExperienceYears(Integer.parseInt(formData.getOrDefault("experienceYears", "0")));
-        profile.setExperienceMonths(Integer.parseInt(formData.getOrDefault("experienceMonths", "0")));
-        profile.setCurrentCompany(formData.get("currentCompany"));
-        profile.setCurrentRole(formData.get("currentRole"));
-
-        // Parse numeric values safely
-        try {
-            if (formData.get("currentCtc") != null && !formData.get("currentCtc").isEmpty()) {
-                profile.setCurrentCtc(Double.parseDouble(formData.get("currentCtc")));
-            }
-            if (formData.get("expectedCtc") != null && !formData.get("expectedCtc").isEmpty()) {
-                profile.setExpectedCtc(Double.parseDouble(formData.get("expectedCtc")));
-            }
-        } catch (NumberFormatException e) {
-            // Handle parsing error
-        }
-
-        profile.setSkills(formData.get("primarySkills"));
-        profile.setHighestEducation(formData.get("highestEducation"));
-        profile.setInstitution(formData.get("institution"));
-        profile.setFieldOfStudy(formData.get("fieldOfStudy"));
-
-        try {
-            if (formData.get("graduationYear") != null && !formData.get("graduationYear").isEmpty()) {
-                profile.setGraduationYear(Integer.parseInt(formData.get("graduationYear")));
-            }
-        } catch (NumberFormatException e) {
-            // Handle parsing error
-        }
-
-        // Handle multi-select and checkbox fields
-        String[] locations = formData.get("preferredLocations") != null ?
-                formData.get("preferredLocations").split(",") : new String[0];
-        profile.setPreferredLocations(String.join(",", locations));
-
-        profile.setWorkMode(formData.get("workMode"));
-
-        // Save the profile
-        profileRepository.save(profile);
-
-        return "redirect:/jobseeker/resume-upload";
-    }
-
-//    @GetMapping("/login")
-//    public String showLoginForm(@RequestParam(value = "error", required = false) String error,
-//                                Model model) {
-//        if (error != null) {
-//            model.addAttribute("errorMessage", "Email or password is not correct.");
-//        }
-//        return "jobseeker/login";
-//    }
-
-    // Updated OTP endpoints with HttpSession
-    @PostMapping("/send-otp")
-    @ResponseBody
-    public Map<String, Object> sendOtp(@RequestBody Map<String, String> requestBody, HttpSession session) {
-        String email = requestBody.get("email");
-
-        // Generate OTP (6-digit number)
-        String otp = String.format("%06d", new Random().nextInt(999999));
-
-        // Store OTP in session
-        session.setAttribute("otp_for_" + email, otp);
-
-        // Send email with OTP
-        try {
-            emailService.sendOtpEmail(email, otp);
-            System.out.println("Generated OTP for " + email + ": " + otp);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            return response;
-        } catch (Exception e) {
-            System.err.println("Failed to send email: " + e.getMessage());
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "Failed to send verification email");
-            return response;
-        }
+    @GetMapping("/verify-otp")
+    public String showVerifyOtp(@RequestParam("email") String email, Model model) {
+        model.addAttribute("email", email);
+        return "jobseeker/verify-otp";
     }
 
     @PostMapping("/verify-otp")
-    @ResponseBody
-    public Map<String, Object> verifyOtp(HttpSession session, @RequestBody Map<String, String> request) {
-        String email = request.get("email");
-        String submittedOtp = request.get("otp");
-
-        // Retrieve stored OTP from session
-        String storedOtp = (String) session.getAttribute("otp_for_" + email);
-
-        boolean verified = storedOtp != null && storedOtp.equals(submittedOtp);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", verified);
-
-        if (verified) {
-            // Remove the OTP from session after successful verification
-            session.removeAttribute("otp_for_" + email);
+    public String handleVerifyOtp(@RequestParam("email") String email,
+                                  @RequestParam("code") String code,
+                                  Model model,
+                                  HttpSession session) {
+        boolean ok = otpService.verifyOtp(email, code);
+        if (!ok) {
+            model.addAttribute("email", email);
+            model.addAttribute("error", "Invalid or expired OTP. Please request a new one.");
+            return "jobseeker/verify-otp";
         }
+        Jobseeker jobseeker = jobseekerRepository.findByEmail(email).orElseThrow();
+        jobseeker.setEmailVerified(true);
+        jobseeker.setVerifiedAt(LocalDateTime.now());
+        jobseekerRepository.save(jobseeker);
 
-        return response;
+        // Store email in session and redirect to onboarding
+        session.setAttribute("email", email);
+        return "redirect:/jobseeker/onboarding?email=" + email;
     }
 
-    @GetMapping("/resume-upload")
-    public String showResumeUploadForm(HttpSession session, Model model) {
-        Long jobseekerId = (Long) session.getAttribute("jobseekerId");
-        if (jobseekerId == null) {
+    @GetMapping("/login")
+    public String showLoginForm() {
+        return "jobseeker/login";
+    }
+
+    @GetMapping("/forgot-password")
+    public String showForgotPassword() {
+        return "jobseeker/forgot-password";
+    }
+
+    @PostMapping("/forgot-password")
+    public String handleForgotPassword(@RequestParam String email,
+                                       HttpServletRequest request,
+                                       Model model) {
+        String baseUrl = request.getScheme() + "://" + request.getServerName()
+                + (request.getServerPort() != 80 && request.getServerPort() != 443
+                   ? ":" + request.getServerPort() : "");
+        passwordResetService.initiateReset(email, baseUrl);
+        // Always show the same message to avoid user enumeration
+        model.addAttribute("message", "If that email is registered, you will receive a reset link shortly.");
+        return "jobseeker/forgot-password";
+    }
+
+    @GetMapping("/reset-password")
+    public String showResetPassword(@RequestParam String token, Model model) {
+        if (!passwordResetService.isValidToken(token)) {
+            model.addAttribute("error", "This reset link is invalid or has expired. Please request a new one.");
+            return "jobseeker/forgot-password";
+        }
+        model.addAttribute("token", token);
+        return "jobseeker/reset-password";
+    }
+
+    @PostMapping("/reset-password")
+    public String handleResetPassword(@RequestParam String token,
+                                      @RequestParam String password,
+                                      @RequestParam String confirmPassword,
+                                      Model model) {
+        if (!password.equals(confirmPassword)) {
+            model.addAttribute("token", token);
+            model.addAttribute("error", "Passwords do not match.");
+            return "jobseeker/reset-password";
+        }
+        if (password.length() < 8) {
+            model.addAttribute("token", token);
+            model.addAttribute("error", "Password must be at least 8 characters.");
+            return "jobseeker/reset-password";
+        }
+        boolean success = passwordResetService.resetPassword(token, password);
+        if (!success) {
+            model.addAttribute("error", "This reset link is invalid or has expired. Please request a new one.");
+            return "jobseeker/forgot-password";
+        }
+        return "redirect:/jobseeker/login?passwordReset=true";
+    }
+
+    @GetMapping("/onboarding")
+    public String showOnboarding(@RequestParam(required = false) String email,
+                                 HttpSession session,
+                                 Model model) {
+        // Get email from parameter or session
+        if (email == null) {
+            email = (String) session.getAttribute("email");
+        }
+
+        if (email == null) {
+            return "redirect:/jobseeker/register";
+        }
+
+        // Fetch jobseeker and profile
+        Jobseeker jobseeker = jobseekerRepository
+                .findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Jobseeker not found"));
+
+        JobseekerProfile profile = profileRepository
+                .findByJobseeker(jobseeker)
+                .orElseGet(() -> {
+                    JobseekerProfile p = new JobseekerProfile();
+                    p.setJobseeker(jobseeker);
+                    p.setId(jobseeker.getId());
+                    return p;
+                });
+
+        model.addAttribute("email", email);
+        model.addAttribute("jobseeker", jobseeker);
+        model.addAttribute("profile", profile);
+        model.addAttribute("profileDto", new JobseekerProfileDto());
+
+        return "jobseeker/onboarding";
+    }
+
+    @PostMapping("/onboarding")
+    public String handleOnboarding(@RequestParam String email,
+                                   @ModelAttribute("profileDto") @Valid JobseekerProfileDto dto,
+                                   BindingResult result,
+                                   Model model) {
+        if (result.hasErrors()) {
+            Jobseeker jobseeker = jobseekerRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("Jobseeker not found"));
+            JobseekerProfile profile = profileRepository.findByJobseeker(jobseeker)
+                    .orElseGet(() -> {
+                        JobseekerProfile p = new JobseekerProfile();
+                        p.setJobseeker(jobseeker);
+                        return p;
+                    });
+            model.addAttribute("jobseeker", jobseeker);
+            model.addAttribute("profile", profile);
+            model.addAttribute("email", email);
+            return "jobseeker/onboarding";
+        }
+
+        Jobseeker jobseeker = jobseekerRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Jobseeker not found"));
+
+        jobseekerService.updateProfile(jobseeker, dto);
+
+        // Redirect to resume upload
+        return "redirect:/jobseeker/resume-onboarding?email=" + email;
+    }
+
+    @GetMapping("/resume-onboarding")
+    public String showResumeOnboarding(@RequestParam String email,
+                                       HttpSession session,
+                                       Model model) {
+        Jobseeker jobseeker = jobseekerRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Jobseeker not found"));
+
+        model.addAttribute("email", email);
+        model.addAttribute("jobseeker", jobseeker);
+        model.addAttribute("resumeUploadDto", new ResumeUploadDto());
+        return "jobseeker/resume-onboarding";
+    }
+
+    @PostMapping("/resume-onboarding")
+    public String handleResumeOnboarding(@RequestParam String email,
+                                         @ModelAttribute("resumeUploadDto") @Valid ResumeUploadDto dto,
+                                         BindingResult result,
+                                         Model model) throws IOException {
+        if (result.hasErrors()) {
+            Jobseeker jobseeker = jobseekerRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("Jobseeker not found"));
+            model.addAttribute("email", email);
+            model.addAttribute("jobseeker", jobseeker);
+            return "jobseeker/resume-onboarding";
+        }
+
+        Jobseeker jobseeker = jobseekerRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Jobseeker not found"));
+
+        if (dto.getFile().isEmpty()) {
+            model.addAttribute("error", "Please select a resume file to upload.");
+            model.addAttribute("email", email);
+            model.addAttribute("jobseeker", jobseeker);
+            return "jobseeker/resume-onboarding";
+        }
+
+        String contentType = dto.getFile().getContentType();
+        if (contentType == null ||
+                !(contentType.equals("application/pdf") ||
+                  contentType.equals("application/msword") ||
+                  contentType.equals("application/vnd.openxmlformats-officedocument.wordprocessingml.document"))) {
+            model.addAttribute("error", "Only PDF or Word documents are allowed.");
+            model.addAttribute("email", email);
+            model.addAttribute("jobseeker", jobseeker);
+            return "jobseeker/resume-onboarding";
+        }
+
+        String fileName = fileStorageService.storeFile(dto.getFile(), jobseeker.getId());
+
+        Resume resume = resumeRepository.findById(jobseeker.getId())
+                .orElseGet(() -> {
+                    Resume r = new Resume();
+                    r.setJobseeker(jobseeker);
+                    r.setId(jobseeker.getId());
+                    return r;
+                });
+        resume.setFileName(fileName);
+        resume.setFilePath(Paths.get(System.getProperty("user.dir"), "uploads", "resumes").resolve(fileName).toString());
+        resume.setJobTypes(dto.getJobTypes());
+        resume.setIndustries(dto.getIndustries());
+        resumeRepository.save(resume);
+
+        jobseeker.setResumeUploaded(true);
+        jobseekerRepository.save(jobseeker);
+
+        // Redirect to login to complete authentication
+        return "redirect:/jobseeker/login?registered=true";
+    }
+
+    @GetMapping("/dashboard")
+    public String dashboard(Principal principal, Model model) {
+
+        // If user is not logged in → redirect to login
+        if (principal == null) {
             return "redirect:/jobseeker/login";
         }
 
-        model.addAttribute("jobseekerId", jobseekerId);
+        String email = principal.getName();
+
+        Jobseeker jobseeker = jobseekerRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Jobseeker not found"));
+
+        List<JobInvite> invites = inviteRepository.findByJobseeker(jobseeker);
+        List<JobInvite> pendingInvites = invites.stream()
+                .filter(inv -> inv.getStatus() == InviteStatus.PENDING)
+                .collect(Collectors.toList());
+
+        model.addAttribute("invites", pendingInvites);
+
+        if (!jobseeker.isProfileCompleted()) {
+            return "redirect:/jobseeker/onboarding?email=" + email;
+        }
+
+        if (!jobseeker.isResumeUploaded()) {
+            return "redirect:/jobseeker/resume-onboarding?email=" + email;
+        }
+
+        JobseekerProfile profile = profileRepository.findByJobseeker(jobseeker).orElse(null);
+        List<Job> recommended = recommendationService.recommendJobs(profile);
+        List<Application> applications = applicationService.findByJobseeker(jobseeker);
+
+        model.addAttribute("jobseeker", jobseeker);
+        model.addAttribute("profile", profile);
+        model.addAttribute("recommendedJobs", recommended);
+        model.addAttribute("applications", applications);
+
+        int completionPercent = onboardingService.getCompletionPercentage(jobseeker, profile);
+        model.addAttribute("completionPercent", completionPercent);
+
+        return "jobseeker/dashboard";
+    }
+
+    @GetMapping("/interview-requests")
+    public String viewInterviewRequests(Principal principal, Model model) {
+        if (principal == null) return "redirect:/jobseeker/login";
+        String email = principal.getName();
+        Jobseeker jobseeker = jobseekerRepository.findByEmail(email).orElseThrow();
+
+        List<JobInvite> invites = inviteRepository.findByJobseeker(jobseeker);
+        List<JobInvite> pendingInvites = invites.stream()
+                .filter(inv -> inv.getStatus() == InviteStatus.PENDING)
+                .collect(Collectors.toList());
+
+        model.addAttribute("jobseeker", jobseeker);
+        model.addAttribute("invites", pendingInvites);
+        return "jobseeker/interview-requests";
+    }
+
+    @GetMapping("/active-interviews")
+    public String viewActiveInterviews(Principal principal, Model model) {
+        if (principal == null) return "redirect:/jobseeker/login";
+        String email = principal.getName();
+        Jobseeker jobseeker = jobseekerRepository.findByEmail(email).orElseThrow();
+
+        List<JobInvite> invites = inviteRepository.findByJobseeker(jobseeker);
+        List<JobInvite> activeInvites = invites.stream()
+                .filter(inv -> inv.getStatus() == InviteStatus.ACCEPTED)
+                .collect(Collectors.toList());
+
+        model.addAttribute("jobseeker", jobseeker);
+        model.addAttribute("invites", activeInvites);
+        return "jobseeker/active-interviews";
+    }
+
+    @GetMapping("/account")
+    public String viewAccountSettings(Principal principal,
+                                      @RequestParam(required = false) String success,
+                                      @RequestParam(required = false) String error,
+                                      Model model) {
+        if (principal == null) return "redirect:/jobseeker/login";
+        String email = principal.getName();
+        Jobseeker jobseeker = jobseekerRepository.findByEmail(email).orElseThrow();
+        model.addAttribute("jobseeker", jobseeker);
+        if (success != null) model.addAttribute("success", success);
+        if (error != null) model.addAttribute("error", error);
+        return "jobseeker/account";
+    }
+
+    @PostMapping("/account/change-password")
+    public String changePassword(Principal principal,
+                                  @RequestParam String currentPassword,
+                                  @RequestParam String newPassword,
+                                  @RequestParam String confirmPassword) {
+        if (principal == null) return "redirect:/jobseeker/login";
+        String email = principal.getName();
+        Jobseeker jobseeker = jobseekerRepository.findByEmail(email).orElseThrow();
+
+        if ("GOOGLE".equals(jobseeker.getAuthProvider())) {
+            return "redirect:/jobseeker/account?error=Google+accounts+cannot+change+password+here";
+        }
+        if (!passwordEncoder.matches(currentPassword, jobseeker.getPassword())) {
+            return "redirect:/jobseeker/account?error=Current+password+is+incorrect";
+        }
+        if (!newPassword.equals(confirmPassword)) {
+            return "redirect:/jobseeker/account?error=New+passwords+do+not+match";
+        }
+        if (newPassword.length() < 9) {
+            return "redirect:/jobseeker/account?error=Password+must+be+at+least+9+characters";
+        }
+        jobseeker.setPassword(passwordEncoder.encode(newPassword));
+        jobseekerRepository.save(jobseeker);
+        return "redirect:/jobseeker/account?success=Password+changed+successfully";
+    }
+
+    @PostMapping("/account/change-name")
+    public String changeName(Principal principal, @RequestParam String fullName) {
+        if (principal == null) return "redirect:/jobseeker/login";
+        if (fullName == null || fullName.isBlank()) {
+            return "redirect:/jobseeker/account?error=Name+cannot+be+blank";
+        }
+        String email = principal.getName();
+        Jobseeker jobseeker = jobseekerRepository.findByEmail(email).orElseThrow();
+        jobseeker.setFullName(fullName.trim());
+        jobseekerRepository.save(jobseeker);
+        return "redirect:/jobseeker/account?success=Name+updated+successfully";
+    }
+
+    @PostMapping("/resend-otp")
+    public String resendOtp(@RequestParam String email, Model model) {
+        jobseekerRepository.findByEmail(email.trim().toLowerCase()).ifPresent(js -> {
+            if (!js.isEmailVerified()) {
+                otpService.resendOtp(email.trim().toLowerCase());
+            }
+        });
+        model.addAttribute("email", email);
+        model.addAttribute("info", "A new OTP has been sent to your email.");
+        return "jobseeker/verify-otp";
+    }
+
+    @GetMapping("/refer-and-earn")
+    public String viewReferAndEarn(Principal principal, Model model) {
+        if (principal == null) return "redirect:/jobseeker/login";
+        String email = principal.getName();
+        Jobseeker jobseeker = jobseekerRepository.findByEmail(email).orElseThrow();
+        model.addAttribute("jobseeker", jobseeker);
+        return "jobseeker/refer-and-earn";
+    }
+
+    @GetMapping("/profile")
+    public String showProfile(Principal principal, Model model) {
+
+        if (principal == null) {
+            return "redirect:/jobseeker/login";
+        }
+
+        String email = principal.getName();
+
+        Jobseeker jobseeker = jobseekerRepository
+                .findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Jobseeker not found"));
+
+        JobseekerProfile profile = profileRepository
+                .findByJobseeker(jobseeker)
+                .orElseGet(() -> {
+                    JobseekerProfile p = new JobseekerProfile();
+                    p.setJobseeker(jobseeker);
+                    p.setId(jobseeker.getId());
+                    return p;
+                });
+
+        model.addAttribute("jobseeker", jobseeker);
+        model.addAttribute("profile", profile);
+
+        return "jobseeker/profile";
+    }
+
+    @GetMapping("/profile/edit")
+    public String editProfile(Principal principal, Model model) {
+        if (principal == null) {
+            return "redirect:/jobseeker/login";
+        }
+
+        String email = principal.getName();
+        Jobseeker jobseeker = jobseekerRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Jobseeker not found"));
+
+        JobseekerProfile profile = profileRepository.findByJobseeker(jobseeker)
+                .orElse(new JobseekerProfile());
+
+        JobseekerProfileDto dto = new JobseekerProfileDto();
+        dto.setExperienceYears(profile.getExperienceYears());
+        dto.setExperienceMonths(profile.getExperienceMonths());
+        dto.setCurrentCompany(profile.getCurrentCompany());
+        dto.setCurrentRole(profile.getCurrentRole());
+        dto.setCurrentCtc(profile.getCurrentCtc());
+        dto.setExpectedCtc(profile.getExpectedCtc());
+        dto.setSkills(profile.getSkills());
+        dto.setPrimarySkills(profile.getPrimarySkills());
+        dto.setHighestEducation(profile.getHighestEducation());
+        dto.setInstitution(profile.getInstitution());
+        dto.setFieldOfStudy(profile.getFieldOfStudy());
+        dto.setGraduationYear(profile.getGraduationYear());
+        dto.setPreferredLocations(profile.getPreferredLocations());
+        dto.setWorkMode(profile.getWorkMode());
+        dto.setNoticePeriodDays(profile.getNoticePeriodDays());
+
+        model.addAttribute("profileDto", dto);
+        return "jobseeker/profile-edit";
+    }
+
+    @PostMapping("/profile/edit")
+    public String handleEditProfile(Principal principal,
+                                    @ModelAttribute("profileDto") @Valid JobseekerProfileDto dto,
+                                    BindingResult result,
+                                    Model model) {
+        if (principal == null) {
+            return "redirect:/jobseeker/login";
+        }
+
+        if (result.hasErrors()) {
+            return "jobseeker/profile-edit";
+        }
+
+        String email = principal.getName();
+        Jobseeker jobseeker = jobseekerRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Jobseeker not found"));
+
+        jobseekerService.updateProfile(jobseeker, dto);
+
+        return "redirect:/jobseeker/profile";
+    }
+
+    @GetMapping("/resume")
+    public String showResumeUpload(Principal principal, Model model) {
+
+        if (principal == null) {
+            return "redirect:/jobseeker/login";
+        }
+
+        model.addAttribute("resumeUploadDto", new ResumeUploadDto());
         return "jobseeker/resume-upload";
     }
 
-    @PostMapping("/resume-upload")
-    public String handleResumeUpload(
-            @RequestParam("resumeFile") MultipartFile file,
-            @RequestParam Map<String, String> formData,
-            @RequestParam(value = "jobTypes", required = false) String[] jobTypes,
-            @RequestParam(value = "industries", required = false) String[] industries,
-            HttpSession session) throws IOException {
+    @PostMapping("/resume")
+    public String handleResumeUpload(Principal principal,
+                                     @ModelAttribute("resumeUploadDto") @Valid ResumeUploadDto dto,
+                                     BindingResult result,
+                                     Model model) throws IOException {
 
-        Long jobseekerId = (Long) session.getAttribute("jobseekerId");
-        if (jobseekerId == null) {
+        if (principal == null) {
             return "redirect:/jobseeker/login";
         }
 
-        // Get the jobseeker
-        Jobseeker jobseeker = jobseekerRepository.findById(jobseekerId)
+        if (result.hasErrors()) {
+            return "jobseeker/resume-upload";
+        }
+
+        String email = principal.getName();
+
+        Jobseeker jobseeker = jobseekerRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Jobseeker not found"));
 
-        // Create directory if it doesn't exist
-        Path directoryPath = Paths.get(uploadDir);
-        if (!Files.exists(directoryPath)) {
-            Files.createDirectories(directoryPath);
+        if (dto.getFile().isEmpty()) {
+            model.addAttribute("error", "Please select a resume file to upload.");
+            return "jobseeker/resume-upload";
         }
 
-        // Create a unique file name
-        String originalFileName = file.getOriginalFilename();
-        String fileExtension = originalFileName.substring(originalFileName.lastIndexOf('.'));
-        String fileName = jobseekerId + "_" + System.currentTimeMillis() + fileExtension;
-        String filePath = uploadDir + "/" + fileName;
-
-        // Save the file using nio
-        Path destinationPath = Paths.get(filePath);
-        Files.copy(file.getInputStream(), destinationPath, StandardCopyOption.REPLACE_EXISTING);
-
-        // Create and save resume entity
-        Resume resume = new Resume();
-        resume.setJobseeker(jobseeker);
-        resume.setFileName(originalFileName);
-        resume.setFileType(file.getContentType());
-        resume.setFilePath(filePath);
-        resume.setNoticePeriod(formData.get("noticePeriod"));
-
-        // Handle multi-select fields
-        if (jobTypes != null) {
-            resume.setJobTypes(String.join(",", jobTypes));
+        String contentType = dto.getFile().getContentType();
+        if (contentType == null ||
+                !(contentType.equals("application/pdf") ||
+                  contentType.equals("application/msword") ||
+                  contentType.equals("application/vnd.openxmlformats-officedocument.wordprocessingml.document"))) {
+            model.addAttribute("error", "Only PDF or Word documents are allowed.");
+            return "jobseeker/resume-upload";
         }
 
-        if (industries != null) {
-            resume.setIndustries(String.join(",", industries));
-        }
+        String fileName = fileStorageService.storeFile(dto.getFile(), jobseeker.getId());
 
+        Resume resume = resumeRepository.findById(jobseeker.getId())
+                .orElseGet(() -> {
+                    Resume r = new Resume();
+                    r.setJobseeker(jobseeker);
+                    r.setId(jobseeker.getId());
+                    return r;
+                });
+        resume.setFileName(fileName);
+        resume.setFilePath(Paths.get(System.getProperty("user.dir"), "uploads", "resumes").resolve(fileName).toString());
+        resume.setJobTypes(dto.getJobTypes());
+        resume.setIndustries(dto.getIndustries());
         resumeRepository.save(resume);
+
+        jobseeker.setResumeUploaded(true);
+        jobseekerRepository.save(jobseeker);
 
         return "redirect:/jobseeker/dashboard";
     }
 
-    @GetMapping("/dashboard")
-    public String dashboard(Model model, Principal principal) {
-        // Get the current logged-in jobseeker
-        Jobseeker jobseeker = jobseekerRepository.findByEmail(principal.getName());
-        model.addAttribute("jobseeker", jobseeker);
+    @PostMapping("/invite/{id}/accept")
+    public String acceptInvite(@PathVariable Long id) {
 
-        // Get the jobseeker's profile
-        JobseekerProfile profile = profileRepository.findById(jobseeker.getId()).orElse(null);
+        JobInvite invite = inviteRepository.findById(id).orElseThrow();
 
-        // Get recommended jobs based on skills
-        List<Job> recommendedJobs = jobRecommendationService.getRecommendedJobs(profile);
-        model.addAttribute("recommendedJobs", recommendedJobs);
+        invite.setStatus(InviteStatus.ACCEPTED);
+        inviteRepository.save(invite);
 
-        return "jobseeker/dashboard";
+        applicationService.apply(invite.getJob(), invite.getJobseeker(), "invite");
+
+        return "redirect:/jobseeker/dashboard";
+    }
+
+    @PostMapping("/invite/{id}/decline")
+    public String declineInvite(@PathVariable Long id) {
+
+        JobInvite invite = inviteRepository.findById(id).orElseThrow();
+
+        invite.setStatus(InviteStatus.DECLINED);
+        inviteRepository.save(invite);
+
+        return "redirect:/jobseeker/dashboard";
     }
 }

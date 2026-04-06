@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!--
+  Usage in pages:
+    <aside th:replace="~{fragments/sidebar :: sidebar('dashboard')}"></aside>
+
+  Requires model attribute: jobseeker (Jobseeker entity)
+  activePage param: dashboard | requests | interviews | applications | profile | edit-profile | account | refer
+-->
+
+<aside th:fragment="sidebar(activePage)" class="sidebar">
+
+    <div class="sidebar-logo">
+        <h2>JobApp</h2>
+        <div class="user-name" th:text="${jobseeker != null ? jobseeker.fullName : 'My Account'}">User Name</div>
+        <span class="user-role">Jobseeker</span>
+    </div>
+
+    <div class="nav-section-label">Main</div>
+    <ul class="nav-menu">
+        <li>
+            <a href="/jobseeker/dashboard" th:classappend="${activePage == 'dashboard'} ? ' active' : ''">
+                <span class="nav-icon"><i class="fas fa-home"></i></span> Home
+            </a>
+        </li>
+        <li>
+            <a href="/jobseeker/interview-requests" th:classappend="${activePage == 'requests'} ? ' active' : ''">
+                <span class="nav-icon"><i class="fas fa-bell"></i></span> Interview Requests
+            </a>
+        </li>
+        <li>
+            <a href="/jobseeker/active-interviews" th:classappend="${activePage == 'interviews'} ? ' active' : ''">
+                <span class="nav-icon"><i class="fas fa-video"></i></span> Active Interviews
+            </a>
+        </li>
+        <li>
+            <a href="/jobseeker/applications" th:classappend="${activePage == 'applications'} ? ' active' : ''">
+                <span class="nav-icon"><i class="fas fa-file-alt"></i></span> Applications
+            </a>
+        </li>
+    </ul>
+
+    <hr class="nav-divider"/>
+
+    <div class="nav-section-label">Account</div>
+    <ul class="nav-menu">
+        <li>
+            <a href="/jobseeker/profile" th:classappend="${activePage == 'profile'} ? ' active' : ''">
+                <span class="nav-icon"><i class="fas fa-user"></i></span> View Profile
+            </a>
+        </li>
+        <li>
+            <a href="/jobseeker/profile/edit" th:classappend="${activePage == 'edit-profile'} ? ' active' : ''">
+                <span class="nav-icon"><i class="fas fa-pen"></i></span> Edit Profile
+            </a>
+        </li>
+        <li>
+            <a href="/jobseeker/resume" th:classappend="${activePage == 'resume'} ? ' active' : ''">
+                <span class="nav-icon"><i class="fas fa-file-pdf"></i></span> Resume
+            </a>
+        </li>
+        <li>
+            <a href="/jobseeker/account" th:classappend="${activePage == 'account'} ? ' active' : ''">
+                <span class="nav-icon"><i class="fas fa-cog"></i></span> Settings
+            </a>
+        </li>
+        <li>
+            <a href="/jobseeker/refer-and-earn" th:classappend="${activePage == 'refer'} ? ' active' : ''">
+                <span class="nav-icon"><i class="fas fa-gift"></i></span> Refer &amp; Earn
+            </a>
+        </li>
+    </ul>
+
+    <div class="sidebar-footer">
+        <form th:action="@{/logout}" method="post" class="logout-form">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <button type="submit"><i class="fas fa-sign-out-alt" style="margin-right:.4rem;"></i>Sign Out</button>
+        </form>
+    </div>
+
+</aside>
+
+</body>
+</html>

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>My Profile - JobApp</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+    <link rel="stylesheet" th:href="@{/css/app.css}"/>
+</head>
+<body>
+
+<aside th:replace="~{fragments/sidebar :: sidebar('profile')}"></aside>
+
+<main class="main-content">
+
+    <div class="top-bar">
+        <div class="page-title">My <span>Profile</span></div>
+        <a href="/jobseeker/profile/edit" style="background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%);color:#fff;border:none;border-radius:.6rem;padding:.5rem 1.2rem;font-weight:600;font-size:.9rem;text-decoration:none;">
+            <i class="fas fa-pen" style="margin-right:.4rem;"></i>Edit Profile
+        </a>
+    </div>
+
+    <!-- Profile Hero -->
+    <div class="section-card">
+        <div class="profile-hero">
+            <div class="avatar-circle"><i class="fas fa-user"></i></div>
+            <h2 style="font-weight:800; margin-bottom:.25rem;" th:text="${jobseeker.fullName}">Name</h2>
+            <div style="opacity:.85; font-size:.95rem; margin-bottom:.5rem;" th:text="${profile != null && profile.profileHeadline != null ? profile.profileHeadline : 'Add a profile headline'}">Headline</div>
+            <div style="opacity:.7; font-size:.85rem;">
+                <i class="fas fa-envelope" style="margin-right:.3rem;"></i>
+                <span th:text="${jobseeker.email}">email</span>
+                <span th:if="${profile != null && profile.workMode != null}" style="margin-left:1rem;">
+                    <i class="fas fa-laptop-house" style="margin-right:.3rem;"></i>
+                    <span th:text="${profile.workMode}">Remote</span>
+                </span>
+                <span th:if="${profile != null && profile.preferredLocations != null}" style="margin-left:1rem;">
+                    <i class="fas fa-map-marker-alt" style="margin-right:.3rem;"></i>
+                    <span th:text="${profile.preferredLocations}">Bangalore</span>
+                </span>
+            </div>
+        </div>
+
+        <!-- About -->
+        <div class="profile-section">
+            <div class="profile-section-label"><i class="fas fa-user-circle"></i> About Me</div>
+            <p style="color:#475569; line-height:1.7; white-space:pre-line;"
+               th:text="${profile != null && profile.about != null ? profile.about : 'No bio added yet. Click Edit Profile to write about yourself.'}">Bio</p>
+        </div>
+
+        <!-- Experience -->
+        <div class="profile-section">
+            <div class="profile-section-label"><i class="fas fa-briefcase"></i> Professional Experience</div>
+            <div class="info-row">
+                <div class="info-item">
+                    <div class="label">Current Role</div>
+                    <div class="value" th:text="${profile != null && profile.currentRole != null ? profile.currentRole : '—'}">Role</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">Current Company</div>
+                    <div class="value" th:text="${profile != null && profile.currentCompany != null ? profile.currentCompany : '—'}">Company</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">Total Experience</div>
+                    <div class="value" th:if="${profile != null}">
+                        <span th:text="${profile.experienceYears ?: 0}">0</span> yrs
+                        <span th:text="${profile.experienceMonths ?: 0}">0</span> mos
+                    </div>
+                    <div class="value" th:unless="${profile != null}">—</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">Notice Period</div>
+                    <div class="value" th:text="${profile != null && profile.noticePeriodDays != null ? profile.noticePeriodDays + ' days' : 'Immediate'}">30 days</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">Current CTC</div>
+                    <div class="value" th:text="${profile != null && profile.currentCtc != null ? profile.currentCtc + ' LPA' : '—'}">0 LPA</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">Expected CTC</div>
+                    <div class="value" th:text="${profile != null && profile.expectedCtc != null ? profile.expectedCtc + ' LPA' : '—'}">0 LPA</div>
+                </div>
+                <div class="info-item" th:if="${profile != null && profile.pastCompanies != null}">
+                    <div class="label">Past Companies</div>
+                    <div class="value" th:text="${profile.pastCompanies}">Companies</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Skills -->
+        <div class="profile-section">
+            <div class="profile-section-label"><i class="fas fa-code"></i> Skills</div>
+            <div th:if="${profile != null && profile.primarySkills != null}">
+                <div style="font-size:.8rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.4px; margin-bottom:.5rem;">Primary</div>
+                <div>
+                    <span th:each="skill : ${#strings.arraySplit(profile.primarySkills, ',')}"
+                          class="skill-chip" th:text="${skill.trim()}">Skill</span>
+                </div>
+            </div>
+            <div th:if="${profile != null && profile.skills != null}" style="margin-top:.75rem;">
+                <div style="font-size:.8rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.4px; margin-bottom:.5rem;">Other</div>
+                <div>
+                    <span th:each="skill : ${#strings.arraySplit(profile.skills, ',')}"
+                          class="skill-chip secondary" th:text="${skill.trim()}">Skill</span>
+                </div>
+            </div>
+            <div th:if="${profile == null || (profile.primarySkills == null && profile.skills == null)}"
+                 style="color:#94a3b8; font-size:.9rem;">No skills added yet.</div>
+        </div>
+
+        <!-- Education -->
+        <div class="profile-section">
+            <div class="profile-section-label"><i class="fas fa-graduation-cap"></i> Education</div>
+            <div class="info-row">
+                <div class="info-item">
+                    <div class="label">Degree</div>
+                    <div class="value" th:text="${profile != null && profile.highestEducation != null ? profile.highestEducation : '—'}">B.Tech</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">Field of Study</div>
+                    <div class="value" th:text="${profile != null && profile.fieldOfStudy != null ? profile.fieldOfStudy : '—'}">CS</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">Institution</div>
+                    <div class="value" th:text="${profile != null && profile.institution != null ? profile.institution : '—'}">IIT</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">Year</div>
+                    <div class="value" th:text="${profile != null && profile.graduationYear != null ? profile.graduationYear : '—'}">2023</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resume -->
+        <div class="profile-section">
+            <div class="profile-section-label"><i class="fas fa-file-pdf"></i> Resume</div>
+            <div th:if="${jobseeker.resumeUploaded}" style="display:flex; align-items:center; justify-content:space-between;">
+                <div style="display:flex; align-items:center; gap:.75rem;">
+                    <div style="background:#fee2e2; width:42px; height:42px; border-radius:.5rem; display:flex; align-items:center; justify-content:center;">
+                        <i class="fas fa-file-pdf" style="color:#dc2626; font-size:1.2rem;"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight:600;">Resume Uploaded</div>
+                        <div style="font-size:.82rem; color:#94a3b8;">Visible to recruiters</div>
+                    </div>
+                </div>
+                <a href="/jobseeker/resume" style="color:#6366f1; font-weight:600; font-size:.85rem; text-decoration:none;">
+                    <i class="fas fa-sync-alt" style="margin-right:.3rem;"></i>Update
+                </a>
+            </div>
+            <div th:unless="${jobseeker.resumeUploaded}" style="text-align:center; padding:1rem 0; color:#94a3b8;">
+                <i class="fas fa-exclamation-circle" style="font-size:1.5rem; color:#f59e0b; margin-bottom:.5rem; display:block;"></i>
+                <div style="margin-bottom:.75rem;">No resume uploaded yet</div>
+                <a href="/jobseeker/resume" style="background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%);color:#fff;padding:.5rem 1.25rem;border-radius:.5rem;font-weight:600;font-size:.85rem;text-decoration:none;">
+                    Upload Resume
+                </a>
+            </div>
+        </div>
+
+    </div><!-- /.section-card -->
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
