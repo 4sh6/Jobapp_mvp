@@ -88,12 +88,15 @@ public class JobService {
         }
     }
 
-    public Page<Job> search(String q, String workMode, Integer expMin, Integer expMax, Pageable pageable) {
+    public Page<Job> search(String q, String workMode, String jobType,
+                            Integer expMin, Integer expMax,
+                            Integer salaryMin, Integer salaryMax,
+                            Pageable pageable) {
         return jobRepository.filterJobs(
-                (q != null && !q.isBlank()) ? q.trim() : null,
-                (workMode != null && !workMode.isBlank()) ? workMode : null,
-                expMin,
-                expMax,
+                (q        != null && !q.isBlank())        ? q.trim()        : null,
+                (workMode != null && !workMode.isBlank()) ? workMode        : null,
+                (jobType  != null && !jobType.isBlank())  ? jobType         : null,
+                expMin, expMax, salaryMin, salaryMax,
                 pageable);
     }
 }

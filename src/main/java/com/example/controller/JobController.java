@@ -32,7 +32,7 @@ public class JobController {
     @GetMapping
     public String listJobs(Model model,
                            @PageableDefault(size = 10, sort = "postedDate", direction = Sort.Direction.DESC) Pageable pageable) {
-        Page<Job> jobsPage = jobService.search(null, null, null, null, pageable);
+        Page<Job> jobsPage = jobService.search(null, null, null, null, null, null, null, pageable);
         model.addAttribute("jobsPage", jobsPage);
         return "jobs/list";
     }
@@ -61,16 +61,22 @@ public class JobController {
     @GetMapping("/search")
     public String search(@RequestParam(required = false) String q,
                          @RequestParam(required = false) String workMode,
+                         @RequestParam(required = false) String jobType,
                          @RequestParam(required = false) Integer expMin,
                          @RequestParam(required = false) Integer expMax,
+                         @RequestParam(required = false) Integer salaryMin,
+                         @RequestParam(required = false) Integer salaryMax,
                          @PageableDefault(size = 10, sort = "postedDate", direction = Sort.Direction.DESC) Pageable pageable,
                          Model model) {
-        Page<Job> jobsPage = jobService.search(q, workMode, expMin, expMax, pageable);
+        Page<Job> jobsPage = jobService.search(q, workMode, jobType, expMin, expMax, salaryMin, salaryMax, pageable);
         model.addAttribute("jobsPage", jobsPage);
         model.addAttribute("q", q);
         model.addAttribute("workMode", workMode);
+        model.addAttribute("jobType", jobType);
         model.addAttribute("expMin", expMin);
         model.addAttribute("expMax", expMax);
+        model.addAttribute("salaryMin", salaryMin);
+        model.addAttribute("salaryMax", salaryMax);
         return "jobs/list";
     }
 

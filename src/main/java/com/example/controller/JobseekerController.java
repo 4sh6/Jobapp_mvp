@@ -23,6 +23,7 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.example.service.PasswordResetService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import jakarta.servlet.http.HttpServletRequest;
@@ -680,6 +681,71 @@ public class JobseekerController {
         JobInvite invite = inviteRepository.findById(id).orElseThrow();
         invite.setStatus(InviteStatus.DECLINED);
         inviteRepository.save(invite);
+        return "redirect:/jobseeker/dashboard";
+    }
+
+    // ─── Profile Details (profiledetails.html) ───
+
+    @GetMapping("/profile-details")
+    public String showProfileDetails(Principal principal, Model model) {
+        if (principal == null) return "redirect:/jobseeker/login";
+        Jobseeker jobseeker = jobseekerRepository.findByEmail(principal.getName()).orElseThrow();
+        model.addAttribute("jobseekerId", jobseeker.getId());
+        return "jobseeker/profiledetails";
+    }
+
+    @PostMapping("/profile-details")
+    public String saveProfileDetails(Principal principal,
+                                     @RequestParam(required = false) String experienceYears,
+                                     @RequestParam(required = false) String experienceMonths,
+                                     @RequestParam(required = false) String currentCompany,
+                                     @RequestParam(required = false) String currentRole,
+                                     @RequestParam(required = false) String currentCtc,
+                                     @RequestParam(required = false) String expectedCtc,
+                                     @RequestParam(required = false) String primarySkills,
+                                     @RequestParam(required = false) String highestEducation,
+                                     @RequestParam(required = false) String institution,
+                                     @RequestParam(required = false) String fieldOfStudy,
+                                     @RequestParam(required = false) String graduationYear,
+                                     @RequestParam(required = false) List<String> preferredLocations,
+                                     @RequestParam(required = false) String workMode,
+                                     RedirectAttributes ra) {
+        if (principal == null) return "redirect:/jobseeker/login";
+        Jobseeker jobseeker = jobseekerRepository.findByEmail(principal.getName()).orElseThrow();
+
+        JobseekerProfile profile = profileRepository.findByJobseeker(jobseeker)
+                .orElseGet(() -> { JobseekerProfile p = new JobseekerProfile(); p.setJobseeker(jobseeker); return p; });
+
+        if (experienceYears != null && !experienceYears.isBlank()) {
+            try { profile.setExperienceYears(Integer.parseInt(experienceYears.replace("+", "").trim())); }
+            catch (NumberFormatException ignored) {}
+        }
+        if (experienceMonths != null && !experienceMonths.isBlank()) {
+            try { profile.setExperienceMonths(Integer.parseInt(experienceMonths.trim())); }
+            catch (NumberFormatException ignored) {}
+        }
+        if (currentCompany != null && !currentCompany.isBlank()) profile.setCurrentCompany(currentCompany.trim());
+        if (currentRole    != null && !currentRole.isBlank())    profile.setCurrentRole(currentRole.trim());
+        if (currentCtc     != null && !currentCtc.isBlank()) {
+            try { profile.setCurrentCtc(Double.parseDouble(currentCtc.trim())); } catch (NumberFormatException ignored) {}
+        }
+        if (expectedCtc != null && !expectedCtc.isBlank()) {
+            try { profile.setExpectedCtc(Double.parseDouble(expectedCtc.trim())); } catch (NumberFormatException ignored) {}
+        }
+        if (primarySkills    != null && !primarySkills.isBlank())    profile.setPrimarySkills(primarySkills.trim());
+        if (highestEducation != null && !highestEducation.isBlank()) profile.setHighestEducation(highestEducation.trim());
+        if (institution      != null && !institution.isBlank())      profile.setInstitution(institution.trim());
+        if (fieldOfStudy     != null && !fieldOfStudy.isBlank())     profile.setFieldOfStudy(fieldOfStudy.trim());
+        if (graduationYear   != null && !graduationYear.isBlank()) {
+            try { profile.setGraduationYear(Integer.parseInt(graduationYear.trim())); } catch (NumberFormatException ignored) {}
+        }
+        if (preferredLocations != null && !preferredLocations.isEmpty()) {
+            profile.setPreferredLocations(String.join(", ", preferredLocations));
+        }
+        if (workMode != null && !workMode.isBlank()) profile.setWorkMode(workMode.trim());
+
+        profileRepository.save(profile);
+        ra.addFlashAttribute("success", "Profile updated successfully!");
         return "redirect:/jobseeker/dashboard";
     }
 

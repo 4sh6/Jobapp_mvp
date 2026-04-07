@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8"/>
-    <title>Jobs - JobApp</title>
+    <title>Jobs - Nexhire</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
     <style>
@@ -79,7 +79,7 @@
 
 <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm mb-4">
     <div class="container">
-        <a class="navbar-brand" href="/">JobApp</a>
+        <a class="navbar-brand" href="/">Nexhire</a>
         <div class="d-flex align-items-center">
             <a class="btn btn-outline-primary me-2" href="/jobseeker/login">Jobseeker</a>
             <a class="btn btn-primary" href="/recruiter/login">Recruiter</a>
@@ -99,39 +99,58 @@
                         <div class="input-group">
                             <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
                             <input type="text" name="q" th:value="${q}" class="form-control border-start-0 ps-0"
-                                   placeholder="Job title, skills, or location…">
+                                   placeholder="Job title, skills, company, or location…">
                         </div>
                         <button type="submit" class="btn btn-primary px-4 fw-bold"
                                 style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; white-space: nowrap;">
                             Search
                         </button>
                     </div>
-                    <!-- Filters -->
-                    <div class="d-flex gap-2 flex-wrap">
-                        <select name="workMode" class="form-select form-select-sm" style="max-width: 160px;">
+                    <!-- Filters row 1: work mode, job type, experience -->
+                    <div class="d-flex gap-2 flex-wrap mb-2">
+                        <select name="workMode" class="form-select form-select-sm" style="max-width:150px;">
                             <option value="">Any Work Mode</option>
-                            <option value="REMOTE"  th:selected="${workMode == 'REMOTE'}">Remote</option>
-                            <option value="HYBRID"  th:selected="${workMode == 'HYBRID'}">Hybrid</option>
-                            <option value="ONSITE"  th:selected="${workMode == 'ONSITE'}">On-site</option>
+                            <option value="REMOTE" th:selected="${workMode == 'REMOTE'}">Remote</option>
+                            <option value="HYBRID" th:selected="${workMode == 'HYBRID'}">Hybrid</option>
+                            <option value="ONSITE" th:selected="${workMode == 'ONSITE'}">On-site</option>
                         </select>
-                        <select name="expMin" class="form-select form-select-sm" style="max-width: 170px;">
+                        <select name="jobType" class="form-select form-select-sm" style="max-width:150px;">
+                            <option value="">Any Job Type</option>
+                            <option value="FULL_TIME" th:selected="${jobType == 'FULL_TIME'}">Full Time</option>
+                            <option value="PART_TIME" th:selected="${jobType == 'PART_TIME'}">Part Time</option>
+                            <option value="CONTRACT"  th:selected="${jobType == 'CONTRACT'}">Contract</option>
+                        </select>
+                        <select name="expMin" class="form-select form-select-sm" style="max-width:155px;">
                             <option value="">Min Experience</option>
-                            <option value="0"  th:selected="${expMin == 0}">Fresher (0 yrs)</option>
-                            <option value="1"  th:selected="${expMin == 1}">1+ yrs</option>
-                            <option value="3"  th:selected="${expMin == 3}">3+ yrs</option>
-                            <option value="5"  th:selected="${expMin == 5}">5+ yrs</option>
-                            <option value="8"  th:selected="${expMin == 8}">8+ yrs</option>
+                            <option value="0" th:selected="${expMin == 0}">Fresher (0 yrs)</option>
+                            <option value="1" th:selected="${expMin == 1}">1+ yrs</option>
+                            <option value="3" th:selected="${expMin == 3}">3+ yrs</option>
+                            <option value="5" th:selected="${expMin == 5}">5+ yrs</option>
+                            <option value="8" th:selected="${expMin == 8}">8+ yrs</option>
                         </select>
-                        <select name="expMax" class="form-select form-select-sm" style="max-width: 170px;">
+                        <select name="expMax" class="form-select form-select-sm" style="max-width:155px;">
                             <option value="">Max Experience</option>
                             <option value="1"  th:selected="${expMax == 1}">Up to 1 yr</option>
                             <option value="3"  th:selected="${expMax == 3}">Up to 3 yrs</option>
                             <option value="5"  th:selected="${expMax == 5}">Up to 5 yrs</option>
                             <option value="10" th:selected="${expMax == 10}">Up to 10 yrs</option>
                         </select>
-                        <a th:if="${q != null or workMode != null or expMin != null or expMax != null}"
+                    </div>
+                    <!-- Filters row 2: salary + clear -->
+                    <div class="d-flex gap-2 flex-wrap align-items-center">
+                        <div class="input-group input-group-sm" style="max-width:160px;">
+                            <span class="input-group-text">₹ Min</span>
+                            <input type="number" name="salaryMin" class="form-control" placeholder="LPA"
+                                   min="0" th:value="${salaryMin}"/>
+                        </div>
+                        <div class="input-group input-group-sm" style="max-width:160px;">
+                            <span class="input-group-text">₹ Max</span>
+                            <input type="number" name="salaryMax" class="form-control" placeholder="LPA"
+                                   min="0" th:value="${salaryMax}"/>
+                        </div>
+                        <a th:if="${q != null or workMode != null or jobType != null or expMin != null or expMax != null or salaryMin != null or salaryMax != null}"
                            href="/jobs" class="btn btn-sm btn-outline-secondary">
-                            <i class="fas fa-times me-1"></i>Clear
+                            <i class="fas fa-times me-1"></i>Clear all
                         </a>
                     </div>
                 </form>
@@ -176,18 +195,18 @@
                 <nav th:if="${jobsPage.totalPages > 1}">
                     <ul class="pagination justify-content-center">
                         <li class="page-item" th:classappend="${jobsPage.first} ? 'disabled' : ''">
-                            <a class="page-link" th:href="@{/jobs/search(page=${jobsPage.number - 1}, q=${q}, workMode=${workMode}, expMin=${expMin}, expMax=${expMax})}">
+                            <a class="page-link" th:href="@{/jobs/search(page=${jobsPage.number - 1}, q=${q}, workMode=${workMode}, jobType=${jobType}, expMin=${expMin}, expMax=${expMax}, salaryMin=${salaryMin}, salaryMax=${salaryMax})}">
                                 <i class="fas fa-chevron-left"></i> Previous
                             </a>
                         </li>
                         <li class="page-item" th:each="i : ${#numbers.sequence(0, jobsPage.totalPages - 1)}"
                             th:classappend="${i == jobsPage.number} ? 'active' : ''">
                             <a class="page-link"
-                               th:href="@{/jobs/search(page=${i}, q=${q}, workMode=${workMode}, expMin=${expMin}, expMax=${expMax})}"
+                               th:href="@{/jobs/search(page=${i}, q=${q}, workMode=${workMode}, jobType=${jobType}, expMin=${expMin}, expMax=${expMax}, salaryMin=${salaryMin}, salaryMax=${salaryMax})}"
                                th:text="${i + 1}">1</a>
                         </li>
                         <li class="page-item" th:classappend="${jobsPage.last} ? 'disabled' : ''">
-                            <a class="page-link" th:href="@{/jobs/search(page=${jobsPage.number + 1}, q=${q}, workMode=${workMode}, expMin=${expMin}, expMax=${expMax})}">
+                            <a class="page-link" th:href="@{/jobs/search(page=${jobsPage.number + 1}, q=${q}, workMode=${workMode}, jobType=${jobType}, expMin=${expMin}, expMax=${expMax}, salaryMin=${salaryMin}, salaryMax=${salaryMax})}">
                                 Next <i class="fas fa-chevron-right"></i>
                             </a>
                         </li>

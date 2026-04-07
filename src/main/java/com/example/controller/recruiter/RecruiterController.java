@@ -264,8 +264,8 @@ public class RecruiterController {
     public String updateStatus(@AuthenticationPrincipal UserDetails userDetails,
                                @PathVariable Long id,
                                @RequestParam ApplicationStatus status,
+                               HttpServletRequest request,
                                RedirectAttributes ra) {
-        // Verify recruiter owns this application's job
         Recruiter recruiter = getRecruiter(userDetails);
         Application app = applicationService.findById(id).orElseThrow();
 
@@ -276,6 +276,20 @@ public class RecruiterController {
 
         app.setStatus(status);
         applicationService.save(app);
+
+        // Email jobseeker about the status change
+        String baseUrl = request.getScheme() + "://" + request.getServerName()
+                + (request.getServerPort() != 80 && request.getServerPort() != 443
+                   ? ":" + request.getServerPort() : "");
+        String companyName = recruiter.getCompany() != null ? recruiter.getCompany().getName() : "A company";
+        emailService.sendStatusUpdateEmail(
+                app.getJobseeker().getEmail(),
+                app.getJobseeker().getFullName(),
+                app.getJob().getTitle(),
+                companyName,
+                status.name(),
+                baseUrl + "/jobseeker/applications");
+
         ra.addFlashAttribute("success", "Status updated to " + status + ".");
         return "redirect:/recruiter/jobs/" + app.getJob().getId() + "/applications";
     }
@@ -356,12 +370,41 @@ public class RecruiterController {
             return "redirect:/recruiter/dashboard";
         }
         Page<JobseekerProfile> candidatesPage = profileRepository.browseWithFilters(skills, expMin, expMax, pageable);
+        List<Job> myJobs = jobService.listJobsByRecruiter(recruiter, org.springframework.data.domain.Pageable.unpaged())
+                .getContent().stream().filter(Job::isActive).toList();
         model.addAttribute("candidatesPage", candidatesPage);
         model.addAttribute("filterSkills", skills);
         model.addAttribute("filterExpMin", expMin);
         model.addAttribute("filterExpMax", expMax);
+        model.addAttribute("myJobs", myJobs);
         model.addAttribute("recruiter", recruiter);
         return "recruiter/browse-candidates";
+    }
+
+    // ──────────────────────────── Candidate Detail ────────────────────────────
+
+    @GetMapping("/candidate/{jobseekerId}")
+    public String viewCandidateDetail(@PathVariable Long jobseekerId,
+                                      @AuthenticationPrincipal UserDetails userDetails,
+                                      Model model, RedirectAttributes ra) {
+        Recruiter recruiter;
+        try { recruiter = getActiveRecruiter(userDetails); }
+        catch (IllegalStateException e) {
+            ra.addFlashAttribute("error", e.getMessage());
+            return "redirect:/recruiter/dashboard";
+        }
+        Jobseeker js = jobseekerRepository.findById(jobseekerId).orElseThrow();
+        JobseekerProfile profile = profileRepository.findByJobseeker(js).orElse(null);
+        Resume resume = resumeRepository.findById(jobseekerId).orElse(null);
+        List<Job> myJobs = jobService.listJobsByRecruiter(recruiter, org.springframework.data.domain.Pageable.unpaged())
+                .getContent().stream().filter(Job::isActive).toList();
+
+        model.addAttribute("candidate", js);
+        model.addAttribute("profile", profile);
+        model.addAttribute("hasResume", resume != null && resume.getFileName() != null);
+        model.addAttribute("myJobs", myJobs);
+        model.addAttribute("recruiter", recruiter);
+        return "recruiter/candidate";
     }
 
     // ──────────────────────────── Invites ────────────────────────────

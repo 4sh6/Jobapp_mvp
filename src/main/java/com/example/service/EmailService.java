@@ -24,7 +24,7 @@ public class EmailService {
         }
         SimpleMailMessage msg = new SimpleMailMessage();
         msg.setTo(to);
-        msg.setSubject("Reset your JobApp password");
+        msg.setSubject("Reset your Nexhire password");
         msg.setText("Click the link below to reset your password. It expires in 1 hour.\n\n" + resetLink
                 + "\n\nIf you did not request this, ignore this email.");
         try {
@@ -49,12 +49,42 @@ public class EmailService {
         msg.setText("Hi " + candidateName + ",\n\n"
                 + companyName + " has invited you to interview for the role of " + jobTitle + ".\n\n"
                 + "Log in to your dashboard to review and respond:\n" + dashboardUrl + "\n\n"
-                + "— The HireFlow Team");
+                + "— The Nexhire Team");
         try {
             mailSender.send(msg);
             log.info("Sent invite notification to {}", to);
         } catch (MailException ex) {
             log.error("Failed to send invite notification to {}: {}", to, ex.getMessage());
+        }
+    }
+
+    public void sendStatusUpdateEmail(String to, String candidateName, String jobTitle,
+                                       String companyName, String status, String dashboardUrl) {
+        String friendlyStatus = switch (status) {
+            case "SHORTLISTED"   -> "Shortlisted";
+            case "UNDER_REVIEW"  -> "Under Review";
+            case "HIRED"         -> "Hired";
+            case "REJECTED"      -> "Not Selected";
+            default              -> status;
+        };
+
+        if (mailSender == null) {
+            log.info("Status update for {} — {} is now {} (mailSender not configured)", to, jobTitle, friendlyStatus);
+            return;
+        }
+        SimpleMailMessage msg = new SimpleMailMessage();
+        msg.setTo(to);
+        msg.setSubject("Update on your application — " + jobTitle + " at " + companyName);
+        msg.setText("Hi " + candidateName + ",\n\n"
+                + companyName + " has updated your application status for " + jobTitle + ".\n\n"
+                + "New status: " + friendlyStatus + "\n\n"
+                + "View your applications:\n" + dashboardUrl + "\n\n"
+                + "— The Nexhire Team");
+        try {
+            mailSender.send(msg);
+            log.info("Sent status update email to {} — status: {}", to, friendlyStatus);
+        } catch (MailException ex) {
+            log.error("Failed to send status update email to {}: {}", to, ex.getMessage());
         }
     }
 
