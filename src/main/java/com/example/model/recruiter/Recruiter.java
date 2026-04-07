@@ -39,6 +39,9 @@ public class Recruiter {
     @Column(name = "plan")
     private String plan = "FREE"; // FREE, PAID
 
+    @Column(name = "suspended")
+    private boolean suspended = false;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -128,4 +131,7 @@ public class Recruiter {
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
+
+    public boolean isSuspended() { return suspended; }
+    public void setSuspended(boolean suspended) { this.suspended = suspended; }
 }

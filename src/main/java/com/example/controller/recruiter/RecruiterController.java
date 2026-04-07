@@ -9,16 +9,24 @@ import com.example.repositary.CompanyRepository;
 import com.example.repositary.JobInviteRepository;
 import com.example.repositary.JobseekerProfileRepository;
 import com.example.repositary.JobseekerRepository;
+import com.example.repositary.ResumeRepository;
 import com.example.repositary.recruiter.RecruiterRepository;
 import com.example.service.ApplicationService;
+import com.example.service.EmailService;
+import com.example.service.FileStorageService;
 import com.example.service.JobService;
 import com.example.service.recruiter.RecruiterService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
@@ -44,6 +52,27 @@ public class RecruiterController {
     @Autowired private JobseekerProfileRepository profileRepository;
     @Autowired private JobInviteRepository inviteRepository;
     @Autowired private JobseekerRepository jobseekerRepository;
+    @Autowired private EmailService emailService;
+    @Autowired private FileStorageService fileStorageService;
+    @Autowired private ResumeRepository resumeRepository;
+
+    // ─── Helper: load recruiter and enforce activation + suspension ───
+
+    private Recruiter getActiveRecruiter(UserDetails userDetails) {
+        Recruiter recruiter = recruiterRepository.findByEmail(userDetails.getUsername()).orElseThrow();
+        if (recruiter.isSuspended()) {
+            throw new IllegalStateException("Your account has been suspended. Contact support.");
+        }
+        if (!"Active".equals(recruiter.getActivationStatus())) {
+            throw new IllegalStateException("Your account is pending admin approval.");
+        }
+        return recruiter;
+    }
+
+    /** Returns recruiter regardless of status — for read-only/profile pages */
+    private Recruiter getRecruiter(UserDetails userDetails) {
+        return recruiterRepository.findByEmail(userDetails.getUsername()).orElseThrow();
+    }
 
     // ──────────────────────────── Auth ────────────────────────────
 
@@ -79,7 +108,15 @@ public class RecruiterController {
                             Model model) {
         if (userDetails == null) return "redirect:/recruiter/login";
 
-        Recruiter recruiter = recruiterRepository.findByEmail(userDetails.getUsername()).orElseThrow();
+        Recruiter recruiter = getRecruiter(userDetails);
+
+        // If account is not active yet, show a pending page instead of crashing
+        if (!"Active".equals(recruiter.getActivationStatus())) {
+            model.addAttribute("recruiter", recruiter);
+            model.addAttribute("status", recruiter.getActivationStatus());
+            return "recruiter/pending-approval";
+        }
+
         Page<Job> jobsPage = jobService.listJobsByRecruiter(recruiter, pageable);
 
         Map<Long, Integer> applicationCounts = new HashMap<>();
@@ -87,11 +124,10 @@ public class RecruiterController {
             applicationCounts.put(job.getId(), applicationService.findByJob(job).size());
         }
 
-        // Dashboard stats
-        long totalJobs       = jobsPage.getTotalElements();
-        long totalApplicants = applicationRepository.countByJobRecruiter(recruiter);
+        long totalJobs        = jobsPage.getTotalElements();
+        long totalApplicants  = applicationRepository.countByJobRecruiter(recruiter);
         long totalInvitesSent = inviteRepository.countByJob_Recruiter(recruiter);
-        long totalHired      = applicationRepository.countHiredByJobRecruiter(recruiter);
+        long totalHired       = applicationRepository.countHiredByJobRecruiter(recruiter);
 
         model.addAttribute("recruiter", recruiter);
         model.addAttribute("jobsPage", jobsPage);
@@ -106,7 +142,13 @@ public class RecruiterController {
     // ──────────────────────────── Job CRUD ────────────────────────────
 
     @GetMapping("/jobs/new")
-    public String newJobForm(Model model) {
+    public String newJobForm(@AuthenticationPrincipal UserDetails userDetails, Model model,
+                             RedirectAttributes ra) {
+        try { getActiveRecruiter(userDetails); }
+        catch (IllegalStateException e) {
+            ra.addFlashAttribute("error", e.getMessage());
+            return "redirect:/recruiter/dashboard";
+        }
         model.addAttribute("jobDto", new JobDto());
         return "recruiter/job-form";
     }
@@ -117,7 +159,12 @@ public class RecruiterController {
                             BindingResult result,
                             RedirectAttributes ra) {
         if (result.hasErrors()) return "recruiter/job-form";
-        Recruiter recruiter = recruiterRepository.findByEmail(userDetails.getUsername()).orElseThrow();
+        Recruiter recruiter;
+        try { recruiter = getActiveRecruiter(userDetails); }
+        catch (IllegalStateException e) {
+            ra.addFlashAttribute("error", e.getMessage());
+            return "redirect:/recruiter/dashboard";
+        }
         jobService.createJob(jobDto, recruiter);
         ra.addFlashAttribute("success", "Job posted successfully!");
         return "redirect:/recruiter/dashboard";
@@ -125,8 +172,13 @@ public class RecruiterController {
 
     @GetMapping("/jobs/{id}/edit")
     public String editJobForm(@AuthenticationPrincipal UserDetails userDetails,
-                              @PathVariable Long id, Model model) {
-        Recruiter recruiter = recruiterRepository.findByEmail(userDetails.getUsername()).orElseThrow();
+                              @PathVariable Long id, Model model, RedirectAttributes ra) {
+        Recruiter recruiter;
+        try { recruiter = getActiveRecruiter(userDetails); }
+        catch (IllegalStateException e) {
+            ra.addFlashAttribute("error", e.getMessage());
+            return "redirect:/recruiter/dashboard";
+        }
         Job job = jobService.findById(id).orElseThrow();
         if (job.getRecruiter() == null || !job.getRecruiter().getId().equals(recruiter.getId())) {
             return "redirect:/recruiter/dashboard";
@@ -158,7 +210,12 @@ public class RecruiterController {
             model.addAttribute("jobId", id);
             return "recruiter/job-edit";
         }
-        Recruiter recruiter = recruiterRepository.findByEmail(userDetails.getUsername()).orElseThrow();
+        Recruiter recruiter;
+        try { recruiter = getActiveRecruiter(userDetails); }
+        catch (IllegalStateException e) {
+            ra.addFlashAttribute("error", e.getMessage());
+            return "redirect:/recruiter/dashboard";
+        }
         try {
             jobService.updateJob(id, jobDto, recruiter);
             ra.addFlashAttribute("success", "Job updated successfully!");
@@ -171,7 +228,12 @@ public class RecruiterController {
     @PostMapping("/jobs/{id}/close")
     public String closeJob(@AuthenticationPrincipal UserDetails userDetails,
                            @PathVariable Long id, RedirectAttributes ra) {
-        Recruiter recruiter = recruiterRepository.findByEmail(userDetails.getUsername()).orElseThrow();
+        Recruiter recruiter;
+        try { recruiter = getActiveRecruiter(userDetails); }
+        catch (IllegalStateException e) {
+            ra.addFlashAttribute("error", e.getMessage());
+            return "redirect:/recruiter/dashboard";
+        }
         Job job = jobService.findById(id).orElseThrow();
         if (job.getRecruiter() == null || !job.getRecruiter().getId().equals(recruiter.getId())) {
             return "redirect:/recruiter/dashboard";
@@ -186,7 +248,7 @@ public class RecruiterController {
     @GetMapping("/jobs/{id}/applications")
     public String viewApplicants(@AuthenticationPrincipal UserDetails userDetails,
                                  @PathVariable Long id, Model model) {
-        Recruiter recruiter = recruiterRepository.findByEmail(userDetails.getUsername()).orElseThrow();
+        Recruiter recruiter = getRecruiter(userDetails);
         Job job = jobService.findById(id).orElseThrow();
         if (job.getRecruiter() == null || !job.getRecruiter().getId().equals(recruiter.getId())) {
             return "redirect:/recruiter/dashboard";
@@ -199,15 +261,51 @@ public class RecruiterController {
     }
 
     @PostMapping("/applications/{id}/status")
-    public String updateStatus(@PathVariable Long id,
+    public String updateStatus(@AuthenticationPrincipal UserDetails userDetails,
+                               @PathVariable Long id,
                                @RequestParam ApplicationStatus status,
                                RedirectAttributes ra) {
+        // Verify recruiter owns this application's job
+        Recruiter recruiter = getRecruiter(userDetails);
         Application app = applicationService.findById(id).orElseThrow();
+
+        if (!app.getJob().getRecruiter().getId().equals(recruiter.getId())) {
+            ra.addFlashAttribute("error", "Unauthorized: you do not own this job.");
+            return "redirect:/recruiter/dashboard";
+        }
+
         app.setStatus(status);
         applicationService.save(app);
         ra.addFlashAttribute("success", "Status updated to " + status + ".");
-        // Redirect back to the job's applications page instead of dashboard
         return "redirect:/recruiter/jobs/" + app.getJob().getId() + "/applications";
+    }
+
+    // ──────────────────────────── Resume Download ────────────────────────────
+
+    @GetMapping("/resume/{jobseekerId}")
+    @ResponseBody
+    public ResponseEntity<Resource> downloadResume(@AuthenticationPrincipal UserDetails userDetails,
+                                                   @PathVariable Long jobseekerId) {
+        // Only active recruiters can download resumes
+        try { getActiveRecruiter(userDetails); }
+        catch (IllegalStateException e) {
+            return ResponseEntity.status(403).build();
+        }
+
+        Resume resume = resumeRepository.findById(jobseekerId).orElse(null);
+        if (resume == null || resume.getFileName() == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Resource resource = fileStorageService.loadFileAsResource(resume.getFileName());
+        String contentType = resume.getFileName().toLowerCase().endsWith(".pdf")
+                ? "application/pdf" : "application/octet-stream";
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "inline; filename=\"" + resume.getFileName() + "\"")
+                .body(resource);
     }
 
     // ──────────────────────────── Candidate Discovery ────────────────────────────
@@ -219,11 +317,15 @@ public class RecruiterController {
                                   @RequestParam(defaultValue = "50") Integer expMax,
                                   @PageableDefault(size = 12) Pageable pageable,
                                   @AuthenticationPrincipal UserDetails userDetails,
-                                  Model model) {
-        Recruiter recruiter = recruiterRepository.findByEmail(userDetails.getUsername()).orElseThrow();
+                                  Model model, RedirectAttributes ra) {
+        Recruiter recruiter;
+        try { recruiter = getActiveRecruiter(userDetails); }
+        catch (IllegalStateException e) {
+            ra.addFlashAttribute("error", e.getMessage());
+            return "redirect:/recruiter/dashboard";
+        }
         Job job = jobService.findById(id).orElseThrow();
 
-        // Use filter params if provided, else fall back to job's settings
         String searchSkills = skills.isBlank() ? (job.getRequiredSkills() != null ? job.getRequiredSkills() : "") : skills;
         int searchExpMin    = (expMin == 0 && skills.isBlank()) ? (job.getExperienceMin() != null ? job.getExperienceMin() : 0) : expMin;
         int searchExpMax    = (expMax == 50 && skills.isBlank()) ? (job.getExperienceMax() != null ? job.getExperienceMax() : 50) : expMax;
@@ -246,8 +348,13 @@ public class RecruiterController {
                                    @RequestParam(defaultValue = "100") Integer expMax,
                                    @PageableDefault(size = 12) Pageable pageable,
                                    @AuthenticationPrincipal UserDetails userDetails,
-                                   Model model) {
-        Recruiter recruiter = recruiterRepository.findByEmail(userDetails.getUsername()).orElseThrow();
+                                   Model model, RedirectAttributes ra) {
+        Recruiter recruiter;
+        try { recruiter = getActiveRecruiter(userDetails); }
+        catch (IllegalStateException e) {
+            ra.addFlashAttribute("error", e.getMessage());
+            return "redirect:/recruiter/dashboard";
+        }
         Page<JobseekerProfile> candidatesPage = profileRepository.browseWithFilters(skills, expMin, expMax, pageable);
         model.addAttribute("candidatesPage", candidatesPage);
         model.addAttribute("filterSkills", skills);
@@ -262,11 +369,25 @@ public class RecruiterController {
     @PostMapping("/jobs/{jobId}/invite/{jobseekerId}")
     public String invite(@PathVariable Long jobId,
                          @PathVariable Long jobseekerId,
+                         @AuthenticationPrincipal UserDetails userDetails,
+                         HttpServletRequest request,
                          RedirectAttributes ra) {
+        Recruiter recruiter;
+        try { recruiter = getActiveRecruiter(userDetails); }
+        catch (IllegalStateException e) {
+            ra.addFlashAttribute("error", e.getMessage());
+            return "redirect:/recruiter/dashboard";
+        }
         Job job = jobService.findById(jobId).orElseThrow();
+
+        // Only the recruiter who owns the job can invite
+        if (!job.getRecruiter().getId().equals(recruiter.getId())) {
+            ra.addFlashAttribute("error", "Unauthorized: you do not own this job.");
+            return "redirect:/recruiter/jobs/" + jobId + "/candidates";
+        }
+
         Jobseeker js = jobseekerRepository.findById(jobseekerId).orElseThrow();
 
-        // Prevent duplicate invites
         if (inviteRepository.existsByJobAndJobseeker(job, js)) {
             ra.addFlashAttribute("error", "An invitation for this candidate has already been sent.");
             return "redirect:/recruiter/jobs/" + jobId + "/candidates";
@@ -277,13 +398,23 @@ public class RecruiterController {
         invite.setJobseeker(js);
         inviteRepository.save(invite);
 
+        // Email notification to candidate
+        String baseUrl = request.getScheme() + "://" + request.getServerName()
+                + (request.getServerPort() != 80 && request.getServerPort() != 443
+                   ? ":" + request.getServerPort() : "");
+        String companyName = recruiter.getCompany() != null ? recruiter.getCompany().getName() : "A company";
+        emailService.sendInviteNotification(
+                js.getEmail(), js.getFullName(),
+                job.getTitle(), companyName,
+                baseUrl + "/jobseeker/interview-requests");
+
         ra.addFlashAttribute("success", "Interview invitation sent to " + js.getFullName() + "!");
         return "redirect:/recruiter/jobs/" + jobId + "/candidates";
     }
 
     @GetMapping("/invites")
     public String viewSentInvites(@AuthenticationPrincipal UserDetails userDetails, Model model) {
-        Recruiter recruiter = recruiterRepository.findByEmail(userDetails.getUsername()).orElseThrow();
+        Recruiter recruiter = getRecruiter(userDetails);
         List<JobInvite> invites = inviteRepository.findByJob_RecruiterOrderByCreatedAtDesc(recruiter);
         model.addAttribute("invites", invites);
         model.addAttribute("recruiter", recruiter);
@@ -294,7 +425,7 @@ public class RecruiterController {
 
     @GetMapping("/company")
     public String viewCompanyProfile(@AuthenticationPrincipal UserDetails userDetails, Model model) {
-        Recruiter recruiter = recruiterRepository.findByEmail(userDetails.getUsername()).orElseThrow();
+        Recruiter recruiter = getRecruiter(userDetails);
         model.addAttribute("recruiter", recruiter);
         model.addAttribute("company", recruiter.getCompany());
         return "recruiter/company-profile";
@@ -310,7 +441,7 @@ public class RecruiterController {
                                        @RequestParam(required = false) String jobTitle,
                                        @RequestParam(required = false) String phoneNumber,
                                        RedirectAttributes ra) {
-        Recruiter recruiter = recruiterRepository.findByEmail(userDetails.getUsername()).orElseThrow();
+        Recruiter recruiter = getRecruiter(userDetails);
         Company company = recruiter.getCompany();
         if (company != null) {
             if (companyName != null && !companyName.isBlank()) company.setName(companyName.trim());

@@ -1,9 +1,12 @@
 package com.example.service;
 
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -40,6 +43,23 @@ public class FileStorageService {
             return fileName;
         } catch (IOException ex) {
             throw new RuntimeException("Could not store file. Please try again!", ex);
+        }
+    }
+
+    /**
+     * Load a resume file as a Spring Resource.
+     * @param fileName the stored file name (from Resume.fileName)
+     */
+    public Resource loadFileAsResource(String fileName) {
+        try {
+            Path filePath = this.fileStorageLocation.resolve(fileName).normalize();
+            Resource resource = new UrlResource(filePath.toUri());
+            if (resource.exists() && resource.isReadable()) {
+                return resource;
+            }
+            throw new RuntimeException("File not found: " + fileName);
+        } catch (MalformedURLException ex) {
+            throw new RuntimeException("File not found: " + fileName, ex);
         }
     }
 }

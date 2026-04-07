@@ -12,6 +12,8 @@ import java.util.Optional;
 public interface RecruiterRepository extends JpaRepository<Recruiter, Long> {
     Optional<Recruiter> findByEmail(String email);
 
+    long countByActivationStatus(String activationStatus);
+
     @Query("SELECT j FROM Jobseeker j WHERE j.id = :id")
     Optional<Jobseeker> findJobseekerById(@Param("id") Long id);
 }

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<aside th:fragment="sidebar(activePage)" class="sidebar">
+
+  <a href="/recruiter/dashboard" class="sidebar-brand">
+    <div class="sidebar-brand-icon">H</div>
+    <span class="sidebar-brand-name">HireFlow</span>
+    <span class="sidebar-brand-tag">RECRUITER</span>
+  </a>
+
+  <nav class="sidebar-nav">
+    <span class="sidebar-section-label">Menu</span>
+
+    <a href="/recruiter/dashboard" class="nav-item"
+       th:classappend="${activePage == 'dashboard'} ? ' active' : ''">
+      <i class="fas fa-chart-line nav-icon"></i>
+      Dashboard
+    </a>
+
+    <a href="/recruiter/candidates" class="nav-item"
+       th:classappend="${activePage == 'candidates'} ? ' active' : ''">
+      <i class="fas fa-users nav-icon"></i>
+      Browse Candidates
+    </a>
+
+    <a href="/recruiter/invites" class="nav-item"
+       th:classappend="${activePage == 'invites'} ? ' active' : ''">
+      <i class="fas fa-paper-plane nav-icon"></i>
+      Sent Invites
+    </a>
+
+    <span class="sidebar-section-label">Account</span>
+
+    <a href="/recruiter/company" class="nav-item"
+       th:classappend="${activePage == 'company'} ? ' active' : ''">
+      <i class="fas fa-building nav-icon"></i>
+      Company Profile
+    </a>
+  </nav>
+
+  <div class="px-3 mb-3">
+    <a href="/recruiter/jobs/new" class="sidebar-post-btn">
+      <i class="fas fa-plus me-2"></i>Post a Job
+    </a>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="recruiter-chip" th:if="${recruiter != null}">
+      <div class="recruiter-avatar"
+           th:text="${#strings.substring(recruiter.name, 0, 1).toUpperCase()}">R</div>
+      <div class="recruiter-info">
+        <div class="recruiter-name" th:text="${recruiter.name}">Recruiter</div>
+        <div class="recruiter-company"
+             th:text="${recruiter.company != null ? recruiter.company.name : recruiter.email}">Company</div>
+      </div>
+    </div>
+
+    <form th:action="@{/logout}" method="post">
+      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+      <button type="submit" class="sidebar-logout">
+        <i class="fas fa-sign-out-alt"></i> Sign out
+      </button>
+    </form>
+  </div>
+
+</aside>
+</body>
+</html>

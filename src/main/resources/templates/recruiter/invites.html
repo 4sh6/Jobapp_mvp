@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sent Invites — HireFlow</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+  <link href="/css/recruiter.css" rel="stylesheet"/>
+</head>
+<body>
+<div class="app-layout">
+
+  <div th:replace="~{fragments/recruiter-sidebar :: sidebar('invites')}"></div>
+
+  <div class="main-content">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Sent Invites</div>
+        <div class="page-subtitle">Interview invitations you've sent to candidates</div>
+      </div>
+    </div>
+
+    <div class="page-body">
+
+      <!-- Empty -->
+      <div th:if="${invites == null || invites.isEmpty()}" class="panel empty-state">
+        <i class="fas fa-paper-plane"></i>
+        <h4>No invites sent yet</h4>
+        <p>Browse candidates and send interview invitations to get started.</p>
+        <a href="/recruiter/candidates" class="btn-primary-custom mt-3">
+          <i class="fas fa-users"></i> Browse Candidates
+        </a>
+      </div>
+
+      <!-- Invites list -->
+      <div th:unless="${invites == null || invites.isEmpty()}">
+        <div th:each="invite : ${invites}" class="person-card">
+          <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+
+            <div style="flex:1;min-width:200px;">
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <div class="person-name" th:text="${invite.jobseeker.fullName}">Candidate</div>
+                <span class="badge-status"
+                      th:classappend="${invite.status.name() == 'PENDING'} ? ' badge-pending' :
+                                     (${invite.status.name() == 'ACCEPTED'} ? ' badge-accepted' : ' badge-declined')"
+                      th:text="${invite.status.name()}">PENDING</span>
+              </div>
+              <div class="person-meta">
+                <span><i class="fas fa-envelope"></i><span th:text="${invite.jobseeker.email}">email</span></span>
+              </div>
+            </div>
+
+            <div style="flex:1;min-width:200px;">
+              <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#94a3b8;margin-bottom:0.25rem;">Job</div>
+              <div style="font-weight:600;font-size:0.9rem;color:#0f172a;" th:text="${invite.job.title}">Job Title</div>
+              <div style="font-size:0.8rem;color:#64748b;">
+                <i class="fas fa-map-marker-alt me-1"></i>
+                <span th:text="${invite.job.location}">Location</span>
+                <span class="mx-1">·</span>
+                <span th:text="${invite.job.workMode}">HYBRID</span>
+              </div>
+              <div style="font-size:0.8rem;color:#64748b;" th:if="${invite.job.salaryMin != null}">
+                <i class="fas fa-rupee-sign me-1"></i>
+                <span th:text="${invite.job.salaryMin}">10</span>–<span th:text="${invite.job.salaryMax}">20</span> LPA
+              </div>
+            </div>
+
+            <div style="flex-shrink:0;text-align:right;">
+              <div style="font-size:0.78rem;color:#94a3b8;">
+                <i class="far fa-calendar-alt me-1"></i>
+                <span th:text="${#temporals.format(invite.createdAt, 'dd MMM yyyy')}">Date</span>
+              </div>
+              <a th:href="@{'/recruiter/jobs/' + ${invite.job.id} + '/applications'}"
+                 class="btn-ghost mt-2" style="font-size:0.78rem;padding:0.4rem 0.75rem;">
+                View Applications
+              </a>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -36,6 +36,28 @@ public class EmailService {
         }
     }
 
+    public void sendInviteNotification(String to, String candidateName,
+                                        String jobTitle, String companyName,
+                                        String dashboardUrl) {
+        if (mailSender == null) {
+            log.info("Invite notification for {}: {} at {} (mailSender not configured)", to, jobTitle, companyName);
+            return;
+        }
+        SimpleMailMessage msg = new SimpleMailMessage();
+        msg.setTo(to);
+        msg.setSubject("You have a new interview invitation — " + jobTitle + " at " + companyName);
+        msg.setText("Hi " + candidateName + ",\n\n"
+                + companyName + " has invited you to interview for the role of " + jobTitle + ".\n\n"
+                + "Log in to your dashboard to review and respond:\n" + dashboardUrl + "\n\n"
+                + "— The HireFlow Team");
+        try {
+            mailSender.send(msg);
+            log.info("Sent invite notification to {}", to);
+        } catch (MailException ex) {
+            log.error("Failed to send invite notification to {}: {}", to, ex.getMessage());
+        }
+    }
+
     public void sendOtp(String to, String otp) {
         if (mailSender == null) {
             // In dev, just log to console

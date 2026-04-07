@@ -88,10 +88,12 @@ public class JobService {
         }
     }
 
-    public Page<Job> search(String q, Pageable pageable) {
-        if (q == null || q.isBlank()) {
-            return jobRepository.listActiveJobs(pageable);
-        }
-        return jobRepository.findMatchingJobs(q, pageable);
+    public Page<Job> search(String q, String workMode, Integer expMin, Integer expMax, Pageable pageable) {
+        return jobRepository.filterJobs(
+                (q != null && !q.isBlank()) ? q.trim() : null,
+                (workMode != null && !workMode.isBlank()) ? workMode : null,
+                expMin,
+                expMax,
+                pageable);
     }
 }

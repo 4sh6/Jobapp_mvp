@@ -13,15 +13,23 @@ public interface JobRepository extends JpaRepository<Job, Long> {
     Page<Job> findByActiveTrueAndStatus(String status, Pageable pageable);
 
     @Query("""
-SELECT j FROM Job j
-WHERE j.active = true
-AND j.status = 'PUBLISHED'
-AND (
-    LOWER(j.title) LIKE LOWER(CONCAT('%', :q, '%'))
-    OR LOWER(j.requiredSkills) LIKE LOWER(CONCAT('%', :q, '%'))
-)
-""")
-    Page<Job> findMatchingJobs(@Param("q") String q, Pageable pageable);
+            SELECT j FROM Job j
+            WHERE j.active = true AND j.status = 'PUBLISHED'
+            AND (:q IS NULL OR :q = '' OR
+                LOWER(j.title)          LIKE LOWER(CONCAT('%', :q, '%')) OR
+                LOWER(j.requiredSkills) LIKE LOWER(CONCAT('%', :q, '%')) OR
+                LOWER(j.location)       LIKE LOWER(CONCAT('%', :q, '%')) OR
+                LOWER(j.description)    LIKE LOWER(CONCAT('%', :q, '%'))
+            )
+            AND (:workMode IS NULL OR :workMode = '' OR j.workMode = :workMode)
+            AND (:expMax  IS NULL OR j.experienceMin <= :expMax)
+            AND (:expMin  IS NULL OR j.experienceMax >= :expMin)
+            """)
+    Page<Job> filterJobs(@Param("q")       String q,
+                         @Param("workMode") String workMode,
+                         @Param("expMin")   Integer expMin,
+                         @Param("expMax")   Integer expMax,
+                         Pageable pageable);
 
     Page<Job> findByRecruiter(Recruiter recruiter, Pageable pageable);
 

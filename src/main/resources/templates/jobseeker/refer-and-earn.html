@@ -60,7 +60,8 @@
                     <div class="referral-box mt-3">
                         <div class="text-uppercase small fw-bold text-muted mb-2">Your Unique Link</div>
                         <div class="referral-code">JOBAPP-REF-<span th:text="${jobseeker.id}">123</span></div>
-                        <button class="btn btn-warning mt-3 w-100 fw-bold" onclick="alert('Link Copied!')">
+                        <button class="btn btn-warning mt-3 w-100 fw-bold" id="copyBtn"
+                                th:onclick="'copyReferralLink(\'JOBAPP-REF-' + ${jobseeker.id} + '\', this)'">
                             <i class="fas fa-copy me-2"></i>Copy Link
                         </button>
                     </div>
@@ -98,5 +99,31 @@
         </div>
     </div>
 </div>
+<script>
+function copyReferralLink(code, btn) {
+    var url = window.location.origin + '/jobseeker/register?ref=' + code;
+    navigator.clipboard.writeText(url).then(function() {
+        var original = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check me-2"></i>Copied!';
+        btn.disabled = true;
+        setTimeout(function() {
+            btn.innerHTML = original;
+            btn.disabled = false;
+        }, 2000);
+    }).catch(function() {
+        // Fallback for older browsers
+        var ta = document.createElement('textarea');
+        ta.value = url;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        btn.innerHTML = '<i class="fas fa-check me-2"></i>Copied!';
+        setTimeout(function() { btn.innerHTML = '<i class="fas fa-copy me-2"></i>Copy Link'; }, 2000);
+    });
+}
+</script>
 </body>
 </html>

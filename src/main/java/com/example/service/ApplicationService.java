@@ -18,15 +18,22 @@ public class ApplicationService {
     private ApplicationRepository applicationRepository;
 
     public Application apply(Job job, Jobseeker jobseeker, String source) {
+        if (!job.isActive() || !"PUBLISHED".equals(job.getStatus())) {
+            throw new IllegalStateException("This job is no longer accepting applications.");
+        }
         Optional<Application> existing = applicationRepository.findByJobAndJobseeker(job, jobseeker);
         if (existing.isPresent()) {
-            return existing.get();
+            throw new IllegalStateException("You have already applied to this job.");
         }
         Application application = new Application();
         application.setJob(job);
         application.setJobseeker(jobseeker);
         application.setSource(source);
         return applicationRepository.save(application);
+    }
+
+    public boolean hasApplied(Job job, Jobseeker jobseeker) {
+        return applicationRepository.findByJobAndJobseeker(job, jobseeker).isPresent();
     }
 
     public List<Application> findByJobseeker(Jobseeker jobseeker) {

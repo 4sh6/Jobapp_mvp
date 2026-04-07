@@ -8,6 +8,11 @@ import com.example.model.*;
 import com.example.repositary.JobInviteRepository;
 import com.example.service.*;
 import com.example.repositary.JobseekerProfileRepository;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ResponseBody;
 import com.example.repositary.JobseekerRepository;
 import com.example.repositary.ResumeRepository;
 import jakarta.validation.Valid;
@@ -71,6 +76,9 @@ public class JobseekerController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private RateLimitService rateLimitService;
+
     @GetMapping("/register")
     public String showRegisterForm(@RequestParam(required = false) String email,
                                    @RequestParam(required = false) String error,
@@ -114,7 +122,16 @@ public class JobseekerController {
     public String handleVerifyOtp(@RequestParam("email") String email,
                                   @RequestParam("code") String code,
                                   Model model,
-                                  HttpSession session) {
+                                  HttpSession session,
+                                  HttpServletRequest request) {
+        // Rate limit: 5 OTP attempts per 10 minutes per email
+        String rateLimitKey = "otp:" + email.toLowerCase();
+        if (!rateLimitService.isAllowed(rateLimitKey, 5, 600)) {
+            model.addAttribute("email", email);
+            model.addAttribute("error", "Too many attempts. Please wait 10 minutes before trying again.");
+            return "jobseeker/verify-otp";
+        }
+
         boolean ok = otpService.verifyOtp(email, code);
         if (!ok) {
             model.addAttribute("email", email);
@@ -126,9 +143,9 @@ public class JobseekerController {
         jobseeker.setVerifiedAt(LocalDateTime.now());
         jobseekerRepository.save(jobseeker);
 
-        // Store email in session and redirect to onboarding
-        session.setAttribute("email", email);
-        return "redirect:/jobseeker/onboarding?email=" + email;
+        // Store email in session to secure the onboarding flow (prevents URL param hijacking)
+        session.setAttribute("pending_onboarding_email", email);
+        return "redirect:/jobseeker/onboarding";
     }
 
     @GetMapping("/login")
@@ -145,6 +162,13 @@ public class JobseekerController {
     public String handleForgotPassword(@RequestParam String email,
                                        HttpServletRequest request,
                                        Model model) {
+        // Rate limit: 3 requests per hour per IP
+        String ip = request.getRemoteAddr();
+        if (!rateLimitService.isAllowed("forgot-pwd:" + ip, 3, 3600)) {
+            model.addAttribute("error", "Too many requests. Please try again later.");
+            return "jobseeker/forgot-password";
+        }
+
         String baseUrl = request.getScheme() + "://" + request.getServerName()
                 + (request.getServerPort() != 80 && request.getServerPort() != 443
                    ? ":" + request.getServerPort() : "");
@@ -188,17 +212,12 @@ public class JobseekerController {
     }
 
     @GetMapping("/onboarding")
-    public String showOnboarding(@RequestParam(required = false) String email,
-                                 HttpSession session,
+    public String showOnboarding(HttpSession session,
+                                 Principal principal,
                                  Model model) {
-        // Get email from parameter or session
-        if (email == null) {
-            email = (String) session.getAttribute("email");
-        }
-
-        if (email == null) {
-            return "redirect:/jobseeker/register";
-        }
+        // Resolve email securely: prefer authenticated principal, then session token
+        String email = resolveOnboardingEmail(session, principal);
+        if (email == null) return "redirect:/jobseeker/register";
 
         // Fetch jobseeker and profile
         Jobseeker jobseeker = jobseekerRepository
@@ -223,19 +242,19 @@ public class JobseekerController {
     }
 
     @PostMapping("/onboarding")
-    public String handleOnboarding(@RequestParam String email,
+    public String handleOnboarding(HttpSession session,
+                                   Principal principal,
                                    @ModelAttribute("profileDto") @Valid JobseekerProfileDto dto,
                                    BindingResult result,
                                    Model model) {
+        String email = resolveOnboardingEmail(session, principal);
+        if (email == null) return "redirect:/jobseeker/register";
+
         if (result.hasErrors()) {
             Jobseeker jobseeker = jobseekerRepository.findByEmail(email)
                     .orElseThrow(() -> new RuntimeException("Jobseeker not found"));
             JobseekerProfile profile = profileRepository.findByJobseeker(jobseeker)
-                    .orElseGet(() -> {
-                        JobseekerProfile p = new JobseekerProfile();
-                        p.setJobseeker(jobseeker);
-                        return p;
-                    });
+                    .orElseGet(() -> { JobseekerProfile p = new JobseekerProfile(); p.setJobseeker(jobseeker); return p; });
             model.addAttribute("jobseeker", jobseeker);
             model.addAttribute("profile", profile);
             model.addAttribute("email", email);
@@ -244,20 +263,18 @@ public class JobseekerController {
 
         Jobseeker jobseeker = jobseekerRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Jobseeker not found"));
-
         jobseekerService.updateProfile(jobseeker, dto);
 
-        // Redirect to resume upload
-        return "redirect:/jobseeker/resume-onboarding?email=" + email;
+        return "redirect:/jobseeker/resume-onboarding";
     }
 
     @GetMapping("/resume-onboarding")
-    public String showResumeOnboarding(@RequestParam String email,
-                                       HttpSession session,
-                                       Model model) {
+    public String showResumeOnboarding(HttpSession session, Principal principal, Model model) {
+        String email = resolveOnboardingEmail(session, principal);
+        if (email == null) return "redirect:/jobseeker/register";
+
         Jobseeker jobseeker = jobseekerRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Jobseeker not found"));
-
         model.addAttribute("email", email);
         model.addAttribute("jobseeker", jobseeker);
         model.addAttribute("resumeUploadDto", new ResumeUploadDto());
@@ -265,10 +282,14 @@ public class JobseekerController {
     }
 
     @PostMapping("/resume-onboarding")
-    public String handleResumeOnboarding(@RequestParam String email,
+    public String handleResumeOnboarding(HttpSession session,
+                                         Principal principal,
                                          @ModelAttribute("resumeUploadDto") @Valid ResumeUploadDto dto,
                                          BindingResult result,
                                          Model model) throws IOException {
+        String email = resolveOnboardingEmail(session, principal);
+        if (email == null) return "redirect:/jobseeker/register";
+
         if (result.hasErrors()) {
             Jobseeker jobseeker = jobseekerRepository.findByEmail(email)
                     .orElseThrow(() -> new RuntimeException("Jobseeker not found"));
@@ -316,7 +337,8 @@ public class JobseekerController {
         jobseeker.setResumeUploaded(true);
         jobseekerRepository.save(jobseeker);
 
-        // Redirect to login to complete authentication
+        // Clear onboarding session marker and redirect to login
+        session.removeAttribute("pending_onboarding_email");
         return "redirect:/jobseeker/login?registered=true";
     }
 
@@ -458,6 +480,28 @@ public class JobseekerController {
         model.addAttribute("email", email);
         model.addAttribute("info", "A new OTP has been sent to your email.");
         return "jobseeker/verify-otp";
+    }
+
+    // ─── Resume download (own resume) ───
+
+    @GetMapping("/resume/download")
+    @ResponseBody
+    public ResponseEntity<Resource> downloadOwnResume(Principal principal) {
+        if (principal == null) return ResponseEntity.status(401).build();
+        String email = principal.getName();
+        Jobseeker jobseeker = jobseekerRepository.findByEmail(email).orElseThrow();
+        Resume resume = resumeRepository.findById(jobseeker.getId()).orElse(null);
+        if (resume == null || resume.getFileName() == null) {
+            return ResponseEntity.notFound().build();
+        }
+        Resource resource = fileStorageService.loadFileAsResource(resume.getFileName());
+        String contentType = resume.getFileName().toLowerCase().endsWith(".pdf")
+                ? "application/pdf" : "application/octet-stream";
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "inline; filename=\"" + resume.getFileName() + "\"")
+                .body(resource);
     }
 
     @GetMapping("/refer-and-earn")
@@ -633,12 +677,23 @@ public class JobseekerController {
 
     @PostMapping("/invite/{id}/decline")
     public String declineInvite(@PathVariable Long id) {
-
         JobInvite invite = inviteRepository.findById(id).orElseThrow();
-
         invite.setStatus(InviteStatus.DECLINED);
         inviteRepository.save(invite);
-
         return "redirect:/jobseeker/dashboard";
+    }
+
+    // ─── Private helpers ───
+
+    /**
+     * Resolves the email for the onboarding flow securely.
+     * Priority: authenticated principal > session token.
+     * Never trusts a URL parameter.
+     */
+    private String resolveOnboardingEmail(HttpSession session, Principal principal) {
+        if (principal != null) {
+            return principal.getName();
+        }
+        return (String) session.getAttribute("pending_onboarding_email");
     }
 }

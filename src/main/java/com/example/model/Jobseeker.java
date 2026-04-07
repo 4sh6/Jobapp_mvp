@@ -53,6 +53,9 @@ public class Jobseeker {
     @Column(name = "auth_provider")
     private String authProvider;
 
+    @Column(name = "active")
+    private boolean active = true;
+
 
     // Getters and setters
 
@@ -130,6 +133,9 @@ public class Jobseeker {
 
     public String getAuthProvider() { return authProvider; }
     public void setAuthProvider(String authProvider) { this.authProvider = authProvider; }
+
+    public boolean isActive() { return active; }
+    public void setActive(boolean active) { this.active = active; }
 
 
 

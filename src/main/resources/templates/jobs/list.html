@@ -94,12 +94,46 @@
             <!-- Search Box -->
             <div class="search-box">
                 <h3 class="mb-3 fw-bold">Find your next job</h3>
-                <form th:action="@{/jobs/search}" method="get" class="d-flex gap-2">
-                    <div class="input-group">
-                        <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
-                        <input type="text" name="q" th:value="${q}" class="form-control border-start-0 ps-0" placeholder="Search by job title or skills...">
+                <form th:action="@{/jobs/search}" method="get">
+                    <div class="d-flex gap-2 mb-3">
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
+                            <input type="text" name="q" th:value="${q}" class="form-control border-start-0 ps-0"
+                                   placeholder="Job title, skills, or location…">
+                        </div>
+                        <button type="submit" class="btn btn-primary px-4 fw-bold"
+                                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; white-space: nowrap;">
+                            Search
+                        </button>
                     </div>
-                    <button type="submit" class="btn btn-primary px-4 fw-bold" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">Search</button>
+                    <!-- Filters -->
+                    <div class="d-flex gap-2 flex-wrap">
+                        <select name="workMode" class="form-select form-select-sm" style="max-width: 160px;">
+                            <option value="">Any Work Mode</option>
+                            <option value="REMOTE"  th:selected="${workMode == 'REMOTE'}">Remote</option>
+                            <option value="HYBRID"  th:selected="${workMode == 'HYBRID'}">Hybrid</option>
+                            <option value="ONSITE"  th:selected="${workMode == 'ONSITE'}">On-site</option>
+                        </select>
+                        <select name="expMin" class="form-select form-select-sm" style="max-width: 170px;">
+                            <option value="">Min Experience</option>
+                            <option value="0"  th:selected="${expMin == 0}">Fresher (0 yrs)</option>
+                            <option value="1"  th:selected="${expMin == 1}">1+ yrs</option>
+                            <option value="3"  th:selected="${expMin == 3}">3+ yrs</option>
+                            <option value="5"  th:selected="${expMin == 5}">5+ yrs</option>
+                            <option value="8"  th:selected="${expMin == 8}">8+ yrs</option>
+                        </select>
+                        <select name="expMax" class="form-select form-select-sm" style="max-width: 170px;">
+                            <option value="">Max Experience</option>
+                            <option value="1"  th:selected="${expMax == 1}">Up to 1 yr</option>
+                            <option value="3"  th:selected="${expMax == 3}">Up to 3 yrs</option>
+                            <option value="5"  th:selected="${expMax == 5}">Up to 5 yrs</option>
+                            <option value="10" th:selected="${expMax == 10}">Up to 10 yrs</option>
+                        </select>
+                        <a th:if="${q != null or workMode != null or expMin != null or expMax != null}"
+                           href="/jobs" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i>Clear
+                        </a>
+                    </div>
                 </form>
             </div>
 
@@ -142,14 +176,20 @@
                 <nav th:if="${jobsPage.totalPages > 1}">
                     <ul class="pagination justify-content-center">
                         <li class="page-item" th:classappend="${jobsPage.first} ? 'disabled' : ''">
-                            <a class="page-link" th:href="@{${q != null ? '/jobs/search' : '/jobs'}(page=${jobsPage.number - 1}, q=${q})}"><i class="fas fa-chevron-left"></i> Previous</a>
+                            <a class="page-link" th:href="@{/jobs/search(page=${jobsPage.number - 1}, q=${q}, workMode=${workMode}, expMin=${expMin}, expMax=${expMax})}">
+                                <i class="fas fa-chevron-left"></i> Previous
+                            </a>
                         </li>
                         <li class="page-item" th:each="i : ${#numbers.sequence(0, jobsPage.totalPages - 1)}"
                             th:classappend="${i == jobsPage.number} ? 'active' : ''">
-                            <a class="page-link" th:href="@{${q != null ? '/jobs/search' : '/jobs'}(page=${i}, q=${q})}" th:text="${i + 1}">1</a>
+                            <a class="page-link"
+                               th:href="@{/jobs/search(page=${i}, q=${q}, workMode=${workMode}, expMin=${expMin}, expMax=${expMax})}"
+                               th:text="${i + 1}">1</a>
                         </li>
                         <li class="page-item" th:classappend="${jobsPage.last} ? 'disabled' : ''">
-                            <a class="page-link" th:href="@{${q != null ? '/jobs/search' : '/jobs'}(page=${jobsPage.number + 1}, q=${q})}">Next <i class="fas fa-chevron-right"></i></a>
+                            <a class="page-link" th:href="@{/jobs/search(page=${jobsPage.number + 1}, q=${q}, workMode=${workMode}, expMin=${expMin}, expMax=${expMax})}">
+                                Next <i class="fas fa-chevron-right"></i>
+                            </a>
                         </li>
                     </ul>
                 </nav>

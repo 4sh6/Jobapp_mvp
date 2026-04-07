@@ -1,21 +1,31 @@
 package com.example.config;
 
+import com.example.security.JwtAuthFilter;
 import com.example.service.JobseekerUserDetailsService;
 import com.example.service.recruiter.RecruiterUserDetailsService;
 import com.example.repositary.JobseekerRepository;
 import com.example.model.Jobseeker;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -23,10 +33,13 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 @Configuration
 @EnableWebSecurity
+@org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 public class SecurityConfig {
 
     @Autowired
@@ -41,40 +54,71 @@ public class SecurityConfig {
     @Autowired
     private JobseekerRepository jobseekerRepository;
 
+    @Autowired
+    private JwtAuthFilter jwtAuthFilter;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Value("${admin.username}")
+    private String adminUsername;
+
+    @Value("${admin.password}")
+    private String adminPassword;
+
+    // CORS allowed origins — set ADMIN_CORS_ORIGINS env var in production
+    @Value("${admin.cors.allowed-origins:http://localhost:5173,http://localhost:3000}")
+    private String corsAllowedOrigins;
+
+    // ─── CORS for React admin frontend ───
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(Arrays.asList(corsAllowedOrigins.split(",")));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(false);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/api/**", config);
+        return source;
+    }
+
+    // ─── Admin UserDetailsService (shared by both Thymeleaf & JWT chains) ───
+    @Bean
+    public InMemoryUserDetailsManager adminUserDetailsManager() {
+        UserDetails admin = User.builder()
+                .username(adminUsername)
+                .password(passwordEncoder.encode(adminPassword))
+                .roles("ADMIN")
+                .build();
+        return new InMemoryUserDetailsManager(admin);
+    }
+
     // ===========================
     // JOBSEEKER SUCCESS HANDLER
     // ===========================
     @Bean
     public AuthenticationSuccessHandler jobseekerSuccessHandler() {
-        return new AuthenticationSuccessHandler() {
-            @Override
-            public void onAuthenticationSuccess(HttpServletRequest request,
-                                              HttpServletResponse response,
-                                              Authentication authentication) throws IOException, ServletException {
-                String email = authentication.getName();
+        return (request, response, authentication) -> {
+            String email = authentication.getName();
+            Optional<Jobseeker> jobseeker = jobseekerRepository.findByEmail(email.trim().toLowerCase());
 
-                // Check if jobseeker exists and profile is completed
-                Optional<Jobseeker> jobseeker = jobseekerRepository.findByEmail(email.trim().toLowerCase());
+            if (jobseeker.isPresent()) {
+                Jobseeker js = jobseeker.get();
 
-                if (jobseeker.isPresent()) {
-                    Jobseeker js = jobseeker.get();
-
-                    // If profile not completed, redirect to onboarding
-                    if (!js.isProfileCompleted()) {
-                        response.sendRedirect("/jobseeker/onboarding?email=" + email);
-                        return;
-                    }
-
-                    // If resume not uploaded, redirect to resume upload
-                    if (!js.isResumeUploaded()) {
-                        response.sendRedirect("/jobseeker/resume-onboarding?email=" + email);
-                        return;
-                    }
+                if (!js.isProfileCompleted()) {
+                    // Store in session so onboarding can verify without URL param manipulation
+                    request.getSession().setAttribute("pending_onboarding_email", email);
+                    response.sendRedirect("/jobseeker/onboarding");
+                    return;
                 }
-
-                // All complete, go to dashboard
-                response.sendRedirect("/jobseeker/dashboard");
+                if (!js.isResumeUploaded()) {
+                    request.getSession().setAttribute("pending_onboarding_email", email);
+                    response.sendRedirect("/jobseeker/resume-onboarding");
+                    return;
+                }
             }
+            response.sendRedirect("/jobseeker/dashboard");
         };
     }
 
@@ -83,58 +127,65 @@ public class SecurityConfig {
     // ===========================
     @Bean
     public AuthenticationFailureHandler jobseekerFailureHandler() {
-        return new AuthenticationFailureHandler() {
-            @Override
-            public void onAuthenticationFailure(HttpServletRequest request,
-                                                HttpServletResponse response,
-                                                AuthenticationException exception) throws IOException, ServletException {
-                
-                String email = request.getParameter("username");
-                
-                // Check if the failure is because user doesn't exist
-                if (exception.getCause() instanceof UsernameNotFoundException || 
-                    exception.getMessage().contains("Jobseeker not found")) {
-                    
-                    // Redirect to registration with prefilled email
-                    response.sendRedirect("/jobseeker/register?email=" + email + "&error=Email not registered. Please sign up.");
-                } else {
-                    // Default error (wrong password, etc.)
-                    response.sendRedirect("/jobseeker/login?error=Invalid email or password");
-                }
+        return (request, response, exception) -> {
+            String email = request.getParameter("username");
+            if (exception.getCause() instanceof UsernameNotFoundException ||
+                    (exception.getMessage() != null && exception.getMessage().contains("Jobseeker not found"))) {
+                response.sendRedirect("/jobseeker/register?email=" + email
+                        + "&error=Email+not+registered.+Please+sign+up.");
+            } else {
+                response.sendRedirect("/jobseeker/login?error=Invalid+email+or+password");
             }
         };
     }
 
-
+    // ─── Admin REST API (JWT, stateless) ───
     @Bean
     @Order(1)
-    public SecurityFilterChain adminSecurity(HttpSecurity http) throws Exception {
+    public SecurityFilterChain adminApiSecurity(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/api/admin/**")
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/admin/login").permitAll()
+                        .anyRequest().hasRole("ADMIN")
+                )
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
+        return http.build();
+    }
+
+    // ─── Admin Thymeleaf (session-based, InMemoryUserDetailsManager) ───
+    @Bean
+    @Order(2)
+    public SecurityFilterChain adminSecurity(HttpSecurity http) throws Exception {
         http
                 .securityMatcher("/admin/**")
+                .userDetailsService(adminUserDetailsManager())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/admin/login").permitAll()
                         .anyRequest().hasRole("ADMIN")
                 )
                 .formLogin(form -> form
                         .loginPage("/admin/login")
+                        .loginProcessingUrl("/admin/login")
                         .defaultSuccessUrl("/admin/dashboard", true)
+                        .failureUrl("/admin/login?error")
                 )
-                .logout(logout -> logout.logoutSuccessUrl("/admin/login?logout"));
+                .logout(logout -> logout
+                        .logoutUrl("/admin/logout")
+                        .logoutSuccessUrl("/admin/login?logout"));
 
         return http.build();
     }
 
-    // ===========================
-    // 2️⃣ JOBSEEKER SECURITY
-    // ===========================
+    // ─── Jobseeker Security ───
     @Bean
-    @Order(2)
+    @Order(3)
     public SecurityFilterChain jobseekerSecurity(HttpSecurity http) throws Exception {
-
-        // Register the Jobseeker-specific UserDetailsService for this security chain
         http.userDetailsService(jobseekerUserDetailsService);
-
         http
                 .securityMatcher("/jobseeker/**", "/jobs/**", "/oauth2/**", "/login/oauth2/**")
                 .authorizeHttpRequests(auth -> auth
@@ -160,8 +211,7 @@ public class SecurityConfig {
                 .oauth2Login(oauth -> oauth
                         .loginPage("/jobseeker/login")
                         .userInfoEndpoint(userInfo ->
-                                userInfo.userService(jobseekerOAuth2UserService)
-                        )
+                                userInfo.userService(jobseekerOAuth2UserService))
                         .successHandler(jobseekerSuccessHandler())
                         .failureUrl("/jobseeker/login?error")
                 )
@@ -170,23 +220,15 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // ===========================
-    // 3️⃣ RECRUITER SECURITY
-    // ===========================
+    // ─── Recruiter Security ───
     @Bean
-    @Order(3)
+    @Order(4)
     public SecurityFilterChain recruiterSecurity(HttpSecurity http) throws Exception {
-
-        // Register the Recruiter-specific UserDetailsService for this security chain
         http.userDetailsService(recruiterUserDetailsService);
-
         http
                 .securityMatcher("/recruiter/**")
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/recruiter/register",
-                                "/recruiter/login"
-                        ).permitAll()
+                        .requestMatchers("/recruiter/register", "/recruiter/login").permitAll()
                         .anyRequest().hasRole("RECRUITER")
                 )
                 .formLogin(form -> form
