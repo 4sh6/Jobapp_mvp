@@ -56,6 +56,47 @@ public class Jobseeker {
     @Column(name = "active")
     private boolean active = true;
 
+    // PENDING → admin reviews → APPROVED or REJECTED → HIRED when placed
+    @Column(name = "approval_status")
+    private String approvalStatus = "PENDING";
+
+    @Column(name = "rejection_reason", length = 500)
+    private String rejectionReason;
+
+    /** Unique code used in the referral link. Generated once on first save. */
+    @Column(name = "referral_code", unique = true, length = 10)
+    private String referralCode;
+
+    // Tracks how many dashboard sessions the "Profile Approved" banner has been shown (max 3)
+    @Column(name = "approval_banner_shown_count", columnDefinition = "integer default 0")
+    private Integer approvalBannerShownCount = 0;
+
+    // True after "Profile Complete!" banner has been shown once; reset when profile drops below 100%
+    @Column(name = "profile_complete_banner_shown", columnDefinition = "boolean default false")
+    private Boolean profileCompleteBannerShown = false;
+
+    /** Set to true by the candidate to pause their profile — hidden from recruiter browse. */
+    @Column(name = "profile_paused", columnDefinition = "boolean default false")
+    private boolean profilePaused = false;
+
+    /**
+     * When true, recruiters whose company name matches the candidate's currentCompany
+     * will NOT see this candidate in browse results — protects active employees.
+     */
+    @Column(name = "hide_from_current_employer", columnDefinition = "boolean default false")
+    private boolean hideFromCurrentEmployer = false;
+
+    /** Timestamp when candidate last paused their profile. */
+    @Column(name = "paused_at")
+    private LocalDateTime pausedAt;
+
+    /** Timestamp when admin approved this profile — used for recency sort in recruiter browse. */
+    @Column(name = "approved_at")
+    private LocalDateTime approvedAt;
+
+    /** Timestamp when admin rejected this profile — used to enforce 30-day re-registration cooldown. */
+    @Column(name = "rejected_at")
+    private LocalDateTime rejectedAt;
 
     // Getters and setters
 
@@ -137,6 +178,33 @@ public class Jobseeker {
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
 
+    public String getApprovalStatus() { return approvalStatus; }
+    public void setApprovalStatus(String approvalStatus) { this.approvalStatus = approvalStatus; }
 
+    public String getRejectionReason() { return rejectionReason; }
+    public void setRejectionReason(String rejectionReason) { this.rejectionReason = rejectionReason; }
 
+    public int getApprovalBannerShownCount() { return approvalBannerShownCount != null ? approvalBannerShownCount : 0; }
+    public void setApprovalBannerShownCount(int approvalBannerShownCount) { this.approvalBannerShownCount = approvalBannerShownCount; }
+
+    public boolean isProfileCompleteBannerShown() { return profileCompleteBannerShown != null && profileCompleteBannerShown; }
+    public void setProfileCompleteBannerShown(boolean profileCompleteBannerShown) { this.profileCompleteBannerShown = profileCompleteBannerShown; }
+
+    public String getReferralCode() { return referralCode; }
+    public void setReferralCode(String referralCode) { this.referralCode = referralCode; }
+
+    public boolean isProfilePaused() { return profilePaused; }
+    public void setProfilePaused(boolean profilePaused) { this.profilePaused = profilePaused; }
+
+    public boolean isHideFromCurrentEmployer() { return hideFromCurrentEmployer; }
+    public void setHideFromCurrentEmployer(boolean hideFromCurrentEmployer) { this.hideFromCurrentEmployer = hideFromCurrentEmployer; }
+
+    public LocalDateTime getPausedAt() { return pausedAt; }
+    public void setPausedAt(LocalDateTime pausedAt) { this.pausedAt = pausedAt; }
+
+    public LocalDateTime getApprovedAt() { return approvedAt; }
+    public void setApprovedAt(LocalDateTime approvedAt) { this.approvedAt = approvedAt; }
+
+    public LocalDateTime getRejectedAt() { return rejectedAt; }
+    public void setRejectedAt(LocalDateTime rejectedAt) { this.rejectedAt = rejectedAt; }
 }

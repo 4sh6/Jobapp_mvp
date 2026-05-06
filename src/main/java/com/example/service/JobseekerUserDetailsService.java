@@ -2,7 +2,7 @@
 package com.example.service;
 
 import com.example.model.Jobseeker;
-import com.example.repositary.JobseekerRepository;
+import com.example.repository.JobseekerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.*;
@@ -22,6 +22,10 @@ public class JobseekerUserDetailsService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("Jobseeker not found"));
         if (!jobseeker.isEmailVerified()) {
             throw new UsernameNotFoundException("Email not verified");
+        }
+        // SECURITY: prevent blocked accounts from logging in
+        if (!jobseeker.isActive()) {
+            throw new UsernameNotFoundException("Account is disabled");
         }
         return new User(jobseeker.getEmail(), jobseeker.getPassword(),
                 List.of(new SimpleGrantedAuthority("ROLE_JOBSEEKER")));

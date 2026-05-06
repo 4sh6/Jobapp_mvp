@@ -2,7 +2,7 @@ package com.example.service;
 
 import com.example.model.Job;
 import com.example.model.JobseekerProfile;
-import com.example.repositary.JobRepository;
+import com.example.repository.JobRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;

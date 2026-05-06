@@ -16,7 +16,10 @@
         <div class="error-code">Oops!</div>
         <h3 class="mb-3">Something went wrong</h3>
         <p class="error-message" th:text="${errorMessage}">We couldn't process your request.</p>
-        <a href="/" class="btn btn-primary px-4 py-2 fw-bold">Return to Home</a>
+        <div class="d-flex gap-2 justify-content-center flex-wrap">
+            <a th:if="${referer != null}" th:href="${referer}" class="btn btn-outline-secondary px-4 py-2">← Go Back</a>
+            <a href="/" class="btn btn-primary px-4 py-2 fw-bold">Return to Home</a>
+        </div>
     </div>
 </body>
 </html>

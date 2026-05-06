@@ -2,7 +2,7 @@
 package com.example;
 
 import com.example.model.Jobseeker;
-import com.example.repositary.JobseekerRepository;
+import com.example.repository.JobseekerRepository;
 import com.example.service.JobseekerUserDetailsService;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;

@@ -5,15 +5,17 @@ import { getRecruiters, approveRecruiter, rejectRecruiter, suspendRecruiter } fr
 
 export default function Recruiters() {
   const [recruiters, setRecruiters] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [page, setPage]       = useState(0);
+  const [loading, setLoading]       = useState(true);
+  const [error, setError]           = useState(null);
+  const [page, setPage]             = useState(0);
 
   function load(p = 0) {
     setLoading(true);
-    getRecruiters(p, 20).then((r) => {
-      setRecruiters(r.data);
-      setPage(p);
-    }).finally(() => setLoading(false));
+    setError(null);
+    getRecruiters(p, 20)
+      .then((r) => { setRecruiters(r.data); setPage(p); })
+      .catch((e) => setError(e?.response?.data?.message || e?.message || 'Failed to load recruiters'))
+      .finally(() => setLoading(false));
   }
 
   useEffect(() => { load(); }, []);
@@ -46,6 +48,11 @@ export default function Recruiters() {
 
         {loading ? (
           <div className="flex items-center justify-center h-48 text-slate-400">Loading…</div>
+        ) : error ? (
+          <div className="flex items-center justify-center h-48 text-red-500 text-sm gap-2">
+            <span>⚠️</span><span>{error}</span>
+            <button onClick={() => load()} className="ml-2 underline text-indigo-600">Retry</button>
+          </div>
         ) : recruiters.length === 0 ? (
           <EmptyState icon="🏢" message="No recruiters registered yet." />
         ) : (

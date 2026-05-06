@@ -148,6 +148,58 @@
         </p>
     </div>
 
+    <!-- Privacy Settings Card -->
+    <div class="form-card">
+        <div class="form-card-title"><i class="fas fa-user-secret"></i> Privacy Settings</div>
+
+        <!-- Flash message -->
+        <div th:if="${privacySuccess}"
+             style="background:#d1fae5; border-left:3px solid #10b981; border-radius:.5rem; padding:.75rem 1rem; margin-bottom:1rem; font-size:.875rem; color:#065f46; font-weight:600;"
+             th:text="${privacySuccess}"></div>
+
+        <!-- Hide from current employer toggle -->
+        <div class="settings-row">
+            <div style="display:flex; gap:.75rem; align-items:flex-start;">
+                <div class="settings-icon" style="background:#fef3c7; color:#b45309;">
+                    <i class="fas fa-building-lock" style="font-size:.9rem;"></i>
+                </div>
+                <div>
+                    <div class="settings-label">Private from your employer</div>
+                    <div class="settings-desc">
+                        When enabled, recruiters from your current company will not see your profile in
+                        candidate search — even if they're on Nexhire. Your name is matched against the
+                        company you listed in your profile.
+                    </div>
+                    <div th:if="${jobseeker.hideFromCurrentEmployer}"
+                         style="margin-top:.4rem; display:inline-flex; align-items:center; gap:.4rem; background:#fef9c3; color:#a16207; font-size:.75rem; font-weight:700; padding:.25rem .75rem; border-radius:2rem;">
+                        <i class="fas fa-eye-slash"></i> Currently hidden from your employer
+                    </div>
+                </div>
+            </div>
+            <!-- Toggle: show OFF button when enabled, ON button when disabled -->
+            <div style="display:flex; flex-direction:column; gap:.5rem; align-items:flex-end;">
+                <form th:if="${!jobseeker.hideFromCurrentEmployer}"
+                      method="post" action="/jobseeker/profile/employer-privacy">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <input type="hidden" name="hide" value="true"/>
+                    <button type="submit" class="btn-action"
+                            style="background:linear-gradient(135deg,#b45309 0%,#d97706 100%);">
+                        <i class="fas fa-eye-slash" style="margin-right:.35rem;"></i>Enable
+                    </button>
+                </form>
+                <form th:if="${jobseeker.hideFromCurrentEmployer}"
+                      method="post" action="/jobseeker/profile/employer-privacy">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <input type="hidden" name="hide" value="false"/>
+                    <button type="submit" class="btn-action"
+                            style="background:linear-gradient(135deg,#059669 0%,#10b981 100%);">
+                        <i class="fas fa-eye" style="margin-right:.35rem;"></i>Disable
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Danger Zone -->
     <div class="form-card" style="border:1.5px solid #fee2e2;">
         <div class="form-card-title" style="color:#dc2626;"><i class="fas fa-exclamation-triangle"></i> Danger Zone</div>

@@ -2,13 +2,14 @@
 package com.example.service;
 
 import com.example.model.EmailOtp;
-import com.example.repositary.EmailOtpRepository;
+import com.example.repository.EmailOtpRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Optional;
-import java.util.Random;
 
 @Service
 public class OtpService {
@@ -19,7 +20,8 @@ public class OtpService {
     @Autowired
     private EmailService emailService;
 
-    private final Random random = new Random();
+    // SECURITY: use SecureRandom instead of Random for cryptographic OTP generation
+    private final SecureRandom random = new SecureRandom();
 
     public void generateAndSendOtp(String email) {
         String code = String.format("%06d", random.nextInt(1_000_000));
@@ -52,5 +54,11 @@ public class OtpService {
         // Delete all previous OTPs for this email then generate a fresh one
         otpRepository.deleteByEmail(email);
         generateAndSendOtp(email);
+    }
+
+    /** Runs every 15 minutes to purge expired OTPs and prevent database bloat. */
+    @Scheduled(fixedRate = 900_000)
+    public void cleanupExpiredOtps() {
+        otpRepository.deleteExpiredBefore(LocalDateTime.now());
     }
 }

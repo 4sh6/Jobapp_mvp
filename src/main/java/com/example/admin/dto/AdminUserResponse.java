@@ -7,6 +7,7 @@ public class AdminUserResponse {
     private Long id;
     private String fullName;
     private String email;
+    private String approvalStatus;
     private boolean emailVerified;
     private boolean resumeUploaded;
     private boolean active;
@@ -18,6 +19,7 @@ public class AdminUserResponse {
         r.id = js.getId();
         r.fullName = js.getFullName();
         r.email = js.getEmail();
+        r.approvalStatus = js.getApprovalStatus();
         r.emailVerified = js.isEmailVerified();
         r.resumeUploaded = js.isResumeUploaded();
         r.active = js.isActive();
@@ -29,6 +31,7 @@ public class AdminUserResponse {
     public Long getId() { return id; }
     public String getFullName() { return fullName; }
     public String getEmail() { return email; }
+    public String getApprovalStatus() { return approvalStatus; }
     public boolean isEmailVerified() { return emailVerified; }
     public boolean isResumeUploaded() { return resumeUploaded; }
     public boolean isActive() { return active; }

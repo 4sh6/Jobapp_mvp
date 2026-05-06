@@ -10,7 +10,7 @@ public class JobDto {
     private String title;
 
     @NotBlank(message = "Job description is required")
-    @Size(max = 4000, message = "Description must not exceed 4000 characters")
+    @Size(min = 20, max = 4000, message = "Description must be between 20 and 4000 characters")
     private String description;
 
     @NotBlank(message = "Required skills are required")

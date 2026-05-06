@@ -1,5 +1,5 @@
 
-package com.example.repositary.recruiter;
+package com.example.repository.recruiter;
 
 import com.example.model.Jobseeker;
 import com.example.model.recruiter.Recruiter;

@@ -2,8 +2,8 @@ package com.example.controller;
 
 import com.example.model.Application;
 import com.example.model.Jobseeker;
-import com.example.repositary.ApplicationRepository;
-import com.example.repositary.JobseekerRepository;
+import com.example.repository.ApplicationRepository;
+import com.example.repository.JobseekerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;

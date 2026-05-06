@@ -202,4 +202,5 @@ public class JobseekerProfileDto {
     public void setNoticePeriodDays(Integer noticePeriodDays) {
         this.noticePeriodDays = noticePeriodDays;
     }
+
 }

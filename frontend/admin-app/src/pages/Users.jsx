@@ -1,22 +1,36 @@
 import { useEffect, useState } from 'react';
 import Layout from '../components/Layout';
 import Badge from '../components/Badge';
-import { getUsers, blockUser, unblockUser, deleteUser } from '../api/adminApi';
+import { getUsers, approveUser, rejectUser, blockUser, unblockUser, deleteUser } from '../api/adminApi';
 
 export default function Users() {
-  const [users, setUsers]   = useState([]);
+  const [users, setUsers]     = useState([]);
   const [loading, setLoading] = useState(true);
-  const [page, setPage]     = useState(0);
+  const [error, setError]     = useState(null);
+  const [page, setPage]       = useState(0);
 
   function load(p = 0) {
     setLoading(true);
-    getUsers(p, 20).then((r) => {
-      setUsers(r.data);
-      setPage(p);
-    }).finally(() => setLoading(false));
+    setError(null);
+    getUsers(p, 20)
+      .then((r) => { setUsers(r.data); setPage(p); })
+      .catch((e) => setError(e?.response?.data?.message || e?.message || 'Failed to load users'))
+      .finally(() => setLoading(false));
   }
 
   useEffect(() => { load(); }, []);
+
+  async function handleApprove(id) {
+    await approveUser(id);
+    load(page);
+  }
+
+  async function handleReject(id, name) {
+    const reason = window.prompt(`Rejection reason for "${name}" (optional):`);
+    if (reason === null) return; // cancelled
+    await rejectUser(id, reason || undefined);
+    load(page);
+  }
 
   async function handleBlock(id, active) {
     if (active) {
@@ -43,6 +57,11 @@ export default function Users() {
 
         {loading ? (
           <div className="flex items-center justify-center h-48 text-slate-400">Loading…</div>
+        ) : error ? (
+          <div className="flex items-center justify-center h-48 text-red-500 text-sm gap-2">
+            <span>⚠️</span><span>{error}</span>
+            <button onClick={() => load()} className="ml-2 underline text-indigo-600">Retry</button>
+          </div>
         ) : users.length === 0 ? (
           <EmptyState icon="👤" message="No users registered yet." />
         ) : (
@@ -52,7 +71,8 @@ export default function Users() {
                 <tr className="bg-slate-50 text-left">
                   <Th>Name</Th>
                   <Th>Email</Th>
-                  <Th>Status</Th>
+                  <Th>Approval</Th>
+                  <Th>Account</Th>
                   <Th>Verified</Th>
                   <Th>Provider</Th>
                   <Th>Joined</Th>
@@ -71,6 +91,16 @@ export default function Users() {
                       </div>
                     </Td>
                     <Td><span className="text-slate-600">{u.email}</span></Td>
+                    <Td>
+                      <Badge
+                        text={u.approvalStatus ?? 'PENDING'}
+                        variant={
+                          u.approvalStatus === 'APPROVED' ? 'success' :
+                          u.approvalStatus === 'REJECTED' ? 'blocked' :
+                          u.approvalStatus === 'HIRED'    ? 'active'  : 'warning'
+                        }
+                      />
+                    </Td>
                     <Td>
                       <Badge
                         text={u.active ? 'Active' : 'Blocked'}
@@ -92,7 +122,23 @@ export default function Users() {
                       </span>
                     </Td>
                     <Td align="right">
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex items-center justify-end gap-2 flex-wrap">
+                        {(u.approvalStatus === 'PENDING' || u.approvalStatus === 'REJECTED' || !u.approvalStatus) && (
+                          <button
+                            onClick={() => handleApprove(u.id)}
+                            className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition"
+                          >
+                            Approve
+                          </button>
+                        )}
+                        {(u.approvalStatus === 'PENDING' || u.approvalStatus === 'APPROVED' || !u.approvalStatus) && (
+                          <button
+                            onClick={() => handleReject(u.id, u.fullName)}
+                            className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-orange-200 text-orange-700 bg-orange-50 hover:bg-orange-100 transition"
+                          >
+                            Reject
+                          </button>
+                        )}
                         <button
                           onClick={() => handleBlock(u.id, u.active)}
                           className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition ${

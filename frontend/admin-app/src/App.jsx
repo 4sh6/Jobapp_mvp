@@ -1,10 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { SidebarProvider } from './context/SidebarContext';
 import Login      from './pages/Login';
 import Dashboard  from './pages/Dashboard';
 import Users      from './pages/Users';
 import Jobs       from './pages/Jobs';
 import Recruiters from './pages/Recruiters';
+import Referrals  from './pages/Referrals';
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated } = useAuth();
@@ -24,6 +26,7 @@ function AppRoutes() {
       <Route path="/users"      element={<ProtectedRoute><Users /></ProtectedRoute>} />
       <Route path="/jobs"       element={<ProtectedRoute><Jobs /></ProtectedRoute>} />
       <Route path="/recruiters" element={<ProtectedRoute><Recruiters /></ProtectedRoute>} />
+      <Route path="/referrals"  element={<ProtectedRoute><Referrals /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   );
@@ -32,9 +35,11 @@ function AppRoutes() {
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
+      <SidebarProvider>
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </SidebarProvider>
     </AuthProvider>
   );
 }

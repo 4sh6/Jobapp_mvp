@@ -1,75 +1,349 @@
-
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
     <meta charset="UTF-8"/>
-    <title>Admin dashboard - Nexhire</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Admin Dashboard — Nexhire</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
     <style>
-        body { background-color: #f5f6fa; }
-        .navbar-brand { font-weight: 700; letter-spacing: 0.05em; }
-        .card { border-radius: 1rem; }
+        *, *::before, *::after { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; height: 100%; background: #f0f2f5; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+
+        /* ── Layout ── */
+        .layout { display: flex; min-height: 100vh; }
+
+        /* ── Sidebar ── */
+        .sidebar {
+            width: 240px;
+            flex-shrink: 0;
+            background: #1a1f36;
+            display: flex;
+            flex-direction: column;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+            overflow-x: hidden;
+            transition: width 0.25s ease;
+        }
+        .sidebar.collapsed { width: 60px; }
+
+        /* Brand */
+        .sidebar-brand {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 1.25rem 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            min-height: 64px;
+            flex-shrink: 0;
+        }
+        .brand-text { overflow: hidden; white-space: nowrap; transition: opacity 0.2s; }
+        .brand-text span { font-size: 1.1rem; font-weight: 800; color: #fff; display: block; }
+        .brand-text small { font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.1em; }
+        .sidebar.collapsed .brand-text { opacity: 0; width: 0; pointer-events: none; }
+
+        /* Toggle button */
+        .sidebar-toggle {
+            background: none; border: none; cursor: pointer;
+            color: rgba(255,255,255,0.5); padding: 0.25rem;
+            border-radius: 0.375rem; transition: all 0.15s;
+            flex-shrink: 0; line-height: 1;
+        }
+        .sidebar-toggle:hover { color: #fff; background: rgba(255,255,255,0.1); }
+
+        /* Nav */
+        .sidebar-nav { padding: 0.75rem 0; flex: 1; }
+        .nav-section-label {
+            padding: 0.5rem 1rem 0.25rem;
+            font-size: 0.6rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.1em;
+            color: rgba(255,255,255,0.3);
+            white-space: nowrap; overflow: hidden;
+            transition: opacity 0.2s;
+        }
+        .sidebar.collapsed .nav-section-label { opacity: 0; }
+
+        .sidebar-link {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.65rem 1rem;
+            color: rgba(255,255,255,0.65);
+            text-decoration: none;
+            font-size: 0.875rem; font-weight: 500;
+            white-space: nowrap;
+            transition: background 0.15s, color 0.15s;
+            position: relative;
+        }
+        .sidebar-link:hover { color: #fff; background: rgba(255,255,255,0.07); }
+        .sidebar-link.active { color: #fff; background: rgba(255,255,255,0.1); }
+        .sidebar-link.active::before {
+            content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+            width: 3px; background: #6366f1; border-radius: 0 2px 2px 0;
+        }
+        .sidebar-link .nav-icon { width: 1.25rem; text-align: center; flex-shrink: 0; font-size: 0.9rem; }
+        .sidebar-link .nav-label { transition: opacity 0.2s; overflow: hidden; }
+        .sidebar.collapsed .nav-label { opacity: 0; width: 0; }
+
+        .sidebar-badge {
+            margin-left: auto; background: #f59e0b; color: #fff;
+            font-size: 0.68rem; font-weight: 700;
+            padding: 0.1rem 0.4rem; border-radius: 999px;
+            min-width: 1.2rem; text-align: center; flex-shrink: 0;
+            transition: opacity 0.2s;
+        }
+        .sidebar.collapsed .sidebar-badge { opacity: 0; pointer-events: none; }
+
+        /* Tooltip shown when collapsed */
+        .sidebar.collapsed .sidebar-link { justify-content: center; }
+        .sidebar.collapsed .sidebar-link[data-tip]:hover::after {
+            content: attr(data-tip);
+            position: absolute; left: 68px; top: 50%; transform: translateY(-50%);
+            background: #1a1f36; color: #fff;
+            font-size: 0.78rem; padding: 0.3rem 0.7rem;
+            border-radius: 0.375rem; white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            pointer-events: none; z-index: 200;
+        }
+
+        /* Footer */
+        .sidebar-footer { padding: 0.875rem 1rem; border-top: 1px solid rgba(255,255,255,0.08); flex-shrink: 0; }
+        .sidebar-footer form button {
+            width: 100%; background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            color: rgba(255,255,255,0.65);
+            font-size: 0.8rem; padding: 0.5rem 0.75rem;
+            border-radius: 0.5rem; cursor: pointer;
+            transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+        }
+        .sidebar-footer form button:hover { background: rgba(220,38,38,0.2); color: #fca5a5; border-color: rgba(220,38,38,0.3); }
+        .sidebar-footer .sign-out-label { transition: opacity 0.2s; white-space: nowrap; overflow: hidden; }
+        .sidebar.collapsed .sign-out-label { opacity: 0; width: 0; }
+
+        /* ── Main content ── */
+        .main-content { flex: 1; min-width: 0; padding: 2rem; overflow-y: auto; }
+
+        /* ── Topbar ── */
+        .topbar {
+            display: flex; align-items: center; gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .topbar h1 { font-size: 1.4rem; font-weight: 800; color: #1a1f36; margin: 0; }
+        .topbar p { color: #6b7280; font-size: 0.85rem; margin: 0; }
+
+        /* ── Pending alert ── */
+        .pending-alert {
+            background: #fffbeb; border: 1px solid #fde68a;
+            border-left: 4px solid #f59e0b;
+            border-radius: 0.75rem; padding: 0.875rem 1.25rem;
+            margin-bottom: 1.5rem;
+            display: flex; align-items: center; gap: 0.75rem; font-size: 0.875rem;
+        }
+        .pending-alert i { color: #f59e0b; }
+        .pending-alert a { color: #b45309; font-weight: 600; text-decoration: none; }
+        .pending-alert a:hover { text-decoration: underline; }
+
+        /* ── Stat cards ── */
+        .stat-card {
+            background: #fff; border-radius: 1rem;
+            padding: 1.25rem 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid #e5e7eb; height: 100%;
+        }
+        .stat-icon {
+            width: 2.5rem; height: 2.5rem; border-radius: 0.625rem;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; margin-bottom: 0.875rem;
+        }
+        .stat-label { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #9ca3af; margin-bottom: 0.2rem; }
+        .stat-value { font-size: 2rem; font-weight: 800; color: #1a1f36; line-height: 1; }
+
+        /* ── Section title ── */
+        .section-title { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; margin-bottom: 0.875rem; }
+
+        /* ── Action cards ── */
+        .action-card {
+            background: #fff; border-radius: 1rem;
+            padding: 1.25rem 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid #e5e7eb;
+            text-decoration: none; color: inherit; display: block; height: 100%;
+            transition: box-shadow 0.15s, transform 0.15s;
+        }
+        .action-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.1); transform: translateY(-2px); color: inherit; }
+        .action-card.urgent { border-left: 3px solid #f59e0b; }
+        .action-card h6 { font-weight: 700; color: #1a1f36; margin-bottom: 0.25rem; font-size: 0.95rem; }
+        .action-card p { font-size: 0.8rem; color: #9ca3af; margin: 0; }
+        .action-badge { background: #fef3c7; color: #92400e; font-size: 0.68rem; font-weight: 700; padding: 0.2rem 0.55rem; border-radius: 999px; white-space: nowrap; }
+        .action-icon { width: 2rem; height: 2rem; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; margin-bottom: 0.75rem; }
     </style>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
-    <div class="container">
-        <a class="navbar-brand" href="/">Nexhire</a>
-        <div>
-            <a class="btn btn-outline-secondary" href="/admin/recruiters">Recruiters</a>
-            <a class="btn btn-outline-secondary ms-2" href="/admin/jobseekers">Jobseekers</a>
+<div class="layout">
+
+    <!-- ── Sidebar ── -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-text">
+                <span>Nexhire</span>
+                <small>Admin Portal</small>
+            </div>
+            <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">
+                <i class="fas fa-bars"></i>
+            </button>
         </div>
-    </div>
-</nav>
-<div class="container my-4">
-<h2 class="mb-4">Admin dashboard</h2>
-<div class="row g-3 mb-4">
-    <div class="col-md-4">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <h6 class="text-muted text-uppercase">Jobseekers</h6>
-                <h3 th:text="${jobseekerCount}">0</h3>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section-label">Overview</div>
+            <a href="/admin/dashboard" class="sidebar-link active" data-tip="Dashboard">
+                <i class="fas fa-home nav-icon"></i>
+                <span class="nav-label">Dashboard</span>
+            </a>
+
+            <div class="nav-section-label mt-2">Candidates</div>
+            <a href="/admin/jobseekers?status=PENDING" class="sidebar-link" data-tip="Pending Review">
+                <i class="fas fa-hourglass-half nav-icon"></i>
+                <span class="nav-label">Pending Review</span>
+                <span class="sidebar-badge" th:if="${pendingCount > 0}" th:text="${pendingCount}">0</span>
+            </a>
+            <a href="/admin/jobseekers?status=APPROVED" class="sidebar-link" data-tip="Approved">
+                <i class="fas fa-check-circle nav-icon"></i>
+                <span class="nav-label">Approved</span>
+            </a>
+            <a href="/admin/jobseekers?status=HIRED" class="sidebar-link" data-tip="Hired">
+                <i class="fas fa-trophy nav-icon"></i>
+                <span class="nav-label">Hired</span>
+            </a>
+            <a href="/admin/jobseekers?status=REJECTED" class="sidebar-link" data-tip="Rejected">
+                <i class="fas fa-times-circle nav-icon"></i>
+                <span class="nav-label">Rejected</span>
+            </a>
+
+            <div class="nav-section-label mt-2">Recruiters</div>
+            <a href="/admin/recruiters" class="sidebar-link" data-tip="All Recruiters">
+                <i class="fas fa-building nav-icon"></i>
+                <span class="nav-label">All Recruiters</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <form th:action="@{/admin/logout}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <button type="submit">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span class="sign-out-label">Sign Out</span>
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- ── Main Content ── -->
+    <main class="main-content">
+
+        <div class="topbar">
+            <div>
+                <h1>Dashboard</h1>
+                <p>Nexhire talent operations overview</p>
             </div>
         </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <h6 class="text-muted text-uppercase">Recruiters</h6>
-                <h3 th:text="${recruiterCount}">0</h3>
+
+        <div class="pending-alert" th:if="${pendingCount > 0}">
+            <i class="fas fa-clock"></i>
+            <div>
+                <strong th:text="${pendingCount}">0</strong> candidate profile(s) awaiting your review.
+                <a href="/admin/jobseekers?status=PENDING">Review now →</a>
             </div>
         </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <h6 class="text-muted text-uppercase">Tracked events</h6>
-                <h3 th:text="${eventCount}">0</h3>
+
+        <!-- Stats -->
+        <div class="row g-3 mb-4">
+            <div class="col-xl-3 col-sm-6">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#fef3c7;">
+                        <i class="fas fa-hourglass-half" style="color:#f59e0b;"></i>
+                    </div>
+                    <div class="stat-label">Pending Review</div>
+                    <div class="stat-value" th:text="${pendingCount}">0</div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-sm-6">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#d1fae5;">
+                        <i class="fas fa-check-circle" style="color:#10b981;"></i>
+                    </div>
+                    <div class="stat-label">Approved Candidates</div>
+                    <div class="stat-value" th:text="${approvedCount}">0</div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-sm-6">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#dbeafe;">
+                        <i class="fas fa-trophy" style="color:#3b82f6;"></i>
+                    </div>
+                    <div class="stat-label">Hired</div>
+                    <div class="stat-value" th:text="${hiredCount}">0</div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-sm-6">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#f3f4f6;">
+                        <i class="fas fa-building" style="color:#6b7280;"></i>
+                    </div>
+                    <div class="stat-label">Recruiters</div>
+                    <div class="stat-value" th:text="${recruiterCount}">0</div>
+                </div>
             </div>
         </div>
-    </div>
+
+        <!-- Quick Actions -->
+        <div class="section-title">Quick Actions</div>
+        <div class="row g-3">
+            <div class="col-lg-4 col-md-6">
+                <a href="/admin/jobseekers?status=PENDING" class="action-card urgent">
+                    <div class="action-icon" style="background:#fef3c7;">
+                        <i class="fas fa-user-check" style="color:#f59e0b;"></i>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6>Review Candidates</h6>
+                            <p>Approve or reject new profile submissions.</p>
+                        </div>
+                        <span class="action-badge ms-2" th:text="${pendingCount} + ' pending'">0 pending</span>
+                    </div>
+                </a>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <a href="/admin/jobseekers?status=APPROVED" class="action-card">
+                    <div class="action-icon" style="background:#d1fae5;">
+                        <i class="fas fa-users" style="color:#10b981;"></i>
+                    </div>
+                    <h6>Approved Pool</h6>
+                    <p>View all candidates visible to recruiters.</p>
+                </a>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <a href="/admin/recruiters" class="action-card">
+                    <div class="action-icon" style="background:#ede9fe;">
+                        <i class="fas fa-building" style="color:#8b5cf6;"></i>
+                    </div>
+                    <h6>Manage Recruiters</h6>
+                    <p>Review and approve recruiter accounts.</p>
+                </a>
+            </div>
+        </div>
+
+    </main>
 </div>
 
-<div class="row g-3">
-    <div class="col-md-4">
-        <a href="/admin/recruiters" class="card text-decoration-none text-dark shadow-sm">
-            <div class="card-body">
-                <h5 class="card-title">Recruiters</h5>
-                <p class="card-text small text-muted">Review and approve recruiter accounts.</p>
-            </div>
-        </a>
-    </div>
-    <div class="col-md-4">
-        <a href="/admin/jobseekers" class="card text-decoration-none text-dark shadow-sm">
-            <div class="card-body">
-                <h5 class="card-title">Jobseekers</h5>
-                <p class="card-text small text-muted">View active candidates on the platform.</p>
-            </div>
-        </a>
-    </div>
-</div>
-
-</div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const sidebar = document.getElementById('sidebar');
+
+    // Restore state from localStorage
+    if (localStorage.getItem('sidebarCollapsed') === 'true') {
+        sidebar.classList.add('collapsed');
+    }
+
+    function toggleSidebar() {
+        sidebar.classList.toggle('collapsed');
+        localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+    }
+</script>
 </body>
 </html>

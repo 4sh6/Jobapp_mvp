@@ -1,4 +1,4 @@
-package com.example.repositary;
+package com.example.repository;
 
 import com.example.model.Job;
 import com.example.model.recruiter.Recruiter;
@@ -44,4 +44,9 @@ public interface JobRepository extends JpaRepository<Job, Long> {
 
     @Query("SELECT j FROM Job j WHERE j.active = true AND j.status = 'PUBLISHED'")
     Page<Job> listActiveJobs(Pageable pageable);
+
+    /** Admin list — eagerly fetches recruiter + company to avoid LazyInitializationException */
+    @Query(value = "SELECT j FROM Job j LEFT JOIN FETCH j.recruiter r LEFT JOIN FETCH r.company",
+           countQuery = "SELECT COUNT(j) FROM Job j")
+    Page<Job> findAllWithRecruiter(Pageable pageable);
 }

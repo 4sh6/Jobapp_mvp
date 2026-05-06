@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Hire Top Tech Talent — Nexhire for Employers</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --dark: #0f172a;
+            --text: #475569;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            color: var(--text);
+            overflow-x: hidden;
+        }
+
+        /* ── Navbar ── */
+        .navbar {
+            padding: 1.1rem 0;
+            background: rgba(255,255,255,.97);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0,0,0,.05);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .navbar-brand {
+            font-weight: 800; font-size: 1.35rem;
+            color: var(--primary); letter-spacing: -.4px;
+            text-decoration: none;
+        }
+        .nav-link { font-weight: 500; color: var(--dark); margin: 0 .4rem; }
+        .nav-link:hover { color: var(--primary); }
+        .btn-login {
+            font-weight: 600; color: var(--dark); border: none;
+            padding: .45rem 1rem; background: transparent;
+            text-decoration: none; font-size: .9rem;
+            transition: color .2s;
+        }
+        .btn-login:hover { color: var(--primary); }
+        .btn-signup {
+            font-weight: 700; background: var(--primary); color: #fff;
+            border: none; padding: .5rem 1.25rem; border-radius: .5rem;
+            font-size: .9rem; text-decoration: none;
+            transition: background .2s, transform .15s;
+        }
+        .btn-signup:hover { background: var(--primary-hover); color: #fff; transform: translateY(-1px); }
+
+        /* ── Hero ── */
+        .hero {
+            padding: 6rem 0 4rem;
+            background: linear-gradient(160deg, #f8fafc 0%, #eef2ff 60%, #fdf4ff 100%);
+            position: relative; overflow: hidden;
+        }
+        .hero::after {
+            content: '';
+            position: absolute; bottom: 0; left: 0; right: 0; height: 80px;
+            background: linear-gradient(to top, #fff, transparent);
+        }
+        .hero-badge {
+            display: inline-flex; align-items: center; gap: .5rem;
+            background: #eef2ff; color: var(--primary);
+            border: 1px solid #c7d2fe; border-radius: 2rem;
+            font-size: .8rem; font-weight: 700; padding: .3rem .9rem;
+            margin-bottom: 1.5rem; letter-spacing: .2px;
+        }
+        .hero-title {
+            font-size: 3.2rem; font-weight: 900; color: var(--dark);
+            line-height: 1.15; letter-spacing: -1.5px; margin-bottom: 1.25rem;
+        }
+        .hero-title span {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .hero-sub {
+            font-size: 1.1rem; color: #64748b; line-height: 1.65;
+            max-width: 540px; margin-bottom: 2.25rem;
+        }
+        .btn-hero-primary {
+            display: inline-flex; align-items: center; gap: .5rem;
+            background: var(--primary); color: #fff; font-weight: 700;
+            font-size: 1rem; padding: .875rem 2rem; border-radius: .6rem;
+            text-decoration: none; transition: all .2s;
+            box-shadow: 0 8px 20px rgba(79,70,229,.3);
+        }
+        .btn-hero-primary:hover { background: var(--primary-hover); color: #fff; transform: translateY(-2px); box-shadow: 0 14px 28px rgba(79,70,229,.35); }
+        .btn-hero-secondary {
+            display: inline-flex; align-items: center; gap: .5rem;
+            background: #fff; color: var(--dark); font-weight: 600;
+            font-size: .95rem; padding: .875rem 1.75rem; border-radius: .6rem;
+            text-decoration: none; border: 1.5px solid #e2e8f0;
+            transition: all .2s;
+        }
+        .btn-hero-secondary:hover { border-color: #c7d2fe; color: var(--primary); transform: translateY(-1px); }
+
+        /* Hero mock card */
+        .hero-card {
+            background: #fff; border-radius: 1.25rem;
+            box-shadow: 0 25px 60px -10px rgba(0,0,0,.12);
+            padding: 1.75rem; transform: rotate(1.5deg);
+            border: 1px solid #f1f5f9;
+        }
+        .candidate-row {
+            display: flex; align-items: center; gap: .875rem;
+            padding: .875rem; border-radius: .75rem; margin-bottom: .5rem;
+            border: 1px solid #f1f5f9; transition: background .2s;
+        }
+        .candidate-row:hover { background: #fafafa; }
+        .candidate-avatar {
+            width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: .95rem; color: #fff;
+        }
+        .candidate-name { font-weight: 700; font-size: .9rem; color: var(--dark); }
+        .candidate-role { font-size: .78rem; color: #64748b; margin-top: .1rem; }
+        .invite-btn {
+            margin-left: auto; flex-shrink: 0;
+            background: #eef2ff; color: var(--primary);
+            border: none; border-radius: .5rem;
+            font-size: .75rem; font-weight: 700;
+            padding: .35rem .8rem; cursor: pointer;
+            transition: background .15s;
+        }
+        .invite-btn:hover { background: #e0e7ff; }
+
+        /* ── Stats strip ── */
+        .stats-strip {
+            background: var(--dark); padding: 3rem 0;
+        }
+        .stat-item { text-align: center; }
+        .stat-item .num { font-size: 2.25rem; font-weight: 900; color: #fff; letter-spacing: -1px; }
+        .stat-item .lbl { font-size: .8rem; color: #94a3b8; text-transform: uppercase; letter-spacing: .8px; font-weight: 600; margin-top: .2rem; }
+
+        /* ── How it works ── */
+        .section { padding: 5rem 0; }
+        .section-tag {
+            font-size: .75rem; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 1px; color: var(--primary); margin-bottom: .75rem;
+        }
+        .section-title {
+            font-size: 2.1rem; font-weight: 800; color: var(--dark);
+            letter-spacing: -.5px; margin-bottom: 1rem;
+        }
+        .section-sub { color: #64748b; font-size: 1rem; line-height: 1.6; max-width: 520px; }
+
+        .step-card {
+            background: #fff; border-radius: 1rem; padding: 2rem;
+            border: 1.5px solid #f1f5f9; height: 100%;
+            transition: border-color .2s, box-shadow .2s, transform .2s;
+        }
+        .step-card:hover { border-color: #c7d2fe; box-shadow: 0 12px 30px rgba(99,102,241,.1); transform: translateY(-3px); }
+        .step-num {
+            font-size: 3rem; font-weight: 900; color: #e0e7ff;
+            line-height: 1; margin-bottom: .5rem;
+        }
+        .step-card h4 { font-weight: 700; color: var(--dark); margin-bottom: .5rem; font-size: 1rem; }
+        .step-card p { font-size: .875rem; color: #64748b; line-height: 1.6; margin: 0; }
+
+        /* ── Features ── */
+        .features { background: #fafafa; padding: 5rem 0; }
+        .feature-item {
+            display: flex; gap: 1.25rem; margin-bottom: 2rem;
+        }
+        .feature-icon {
+            width: 48px; height: 48px; border-radius: .75rem; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem;
+        }
+        .feature-icon.purple { background: #ede9fe; color: #7c3aed; }
+        .feature-icon.indigo { background: #eef2ff; color: #4f46e5; }
+        .feature-icon.green  { background: #ecfdf5; color: #059669; }
+        .feature-icon.amber  { background: #fffbeb; color: #d97706; }
+        .feature-item h5 { font-weight: 700; color: var(--dark); margin-bottom: .3rem; font-size: .95rem; }
+        .feature-item p  { font-size: .85rem; color: #64748b; line-height: 1.55; margin: 0; }
+
+        /* ── CTA section ── */
+        .cta-section {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            padding: 5rem 0; text-align: center;
+        }
+        .cta-section h2 { font-size: 2.25rem; font-weight: 900; color: #fff; letter-spacing: -.5px; margin-bottom: .875rem; }
+        .cta-section p { color: rgba(255,255,255,.75); font-size: 1.05rem; margin-bottom: 2rem; }
+        .btn-cta-white {
+            display: inline-flex; align-items: center; gap: .5rem;
+            background: #fff; color: var(--primary);
+            font-weight: 800; font-size: 1rem;
+            padding: .9rem 2.25rem; border-radius: .6rem;
+            text-decoration: none; transition: all .2s;
+            box-shadow: 0 8px 20px rgba(0,0,0,.15);
+        }
+        .btn-cta-white:hover { color: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 14px 28px rgba(0,0,0,.2); }
+        .btn-cta-outline {
+            display: inline-flex; align-items: center; gap: .5rem;
+            background: transparent; color: #fff;
+            font-weight: 700; font-size: .95rem;
+            padding: .875rem 1.75rem; border-radius: .6rem;
+            text-decoration: none; border: 1.5px solid rgba(255,255,255,.4);
+            transition: all .2s;
+        }
+        .btn-cta-outline:hover { border-color: rgba(255,255,255,.8); color: #fff; }
+
+        /* ── Footer ── */
+        .footer { background: var(--dark); padding: 3rem 0 1.5rem; }
+        .footer-brand { font-weight: 800; font-size: 1.2rem; color: #fff; text-decoration: none; display: block; margin-bottom: .75rem; }
+        .footer-text { color: #64748b; font-size: .875rem; line-height: 1.6; }
+        .footer-link { color: #64748b; text-decoration: none; font-size: .875rem; display: block; margin-bottom: .5rem; transition: color .15s; }
+        .footer-link:hover { color: #fff; }
+        .footer-bottom { border-top: 1px solid #1e293b; margin-top: 2.5rem; padding-top: 1.5rem; color: #475569; font-size: .82rem; text-align: center; }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg">
+    <div class="container">
+        <a class="navbar-brand" href="/">Nexhire</a>
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="nav">
+            <ul class="navbar-nav mx-auto">
+                <li class="nav-item"><a class="nav-link" href="#how-it-works">How it Works</a></li>
+                <li class="nav-item"><a class="nav-link" href="#features">Why Nexhire</a></li>
+                <li class="nav-item"><a class="nav-link" href="/">For Candidates</a></li>
+            </ul>
+            <div class="d-flex align-items-center gap-2 mt-3 mt-lg-0">
+                <a href="/recruiter/login" class="btn-login">Sign in</a>
+                <a href="/recruiter/register" class="btn-signup">Get started free</a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+    <div class="container">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-6">
+                <div class="hero-badge">
+                    <i class="fas fa-building"></i> For Employers & Recruiters
+                </div>
+                <h1 class="hero-title">Find engineers who <span>actually want</span> your role.</h1>
+                <p class="hero-sub">Browse pre-vetted, actively open tech talent. Send interview invites with upfront salary — no guesswork, no wasted calls.</p>
+                <div class="d-flex flex-wrap gap-3">
+                    <a href="/recruiter/register" class="btn-hero-primary">
+                        Start hiring — it's free <i class="fas fa-arrow-right"></i>
+                    </a>
+                    <a href="/recruiter/login" class="btn-hero-secondary">
+                        <i class="fas fa-sign-in-alt"></i> Sign in
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-6 d-none d-lg-block">
+                <div class="hero-card">
+                    <div style="font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:#94a3b8; margin-bottom:1rem;">Top Candidates — Ready to Interview</div>
+                    <div class="candidate-row">
+                        <div class="candidate-avatar" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);">A</div>
+                        <div>
+                            <div class="candidate-name">Aditya Sharma</div>
+                            <div class="candidate-role">Senior Backend Engineer · 6 yrs · ₹28–38 LPA</div>
+                        </div>
+                        <button class="invite-btn">Invite</button>
+                    </div>
+                    <div class="candidate-row">
+                        <div class="candidate-avatar" style="background:linear-gradient(135deg,#10b981,#34d399);">P</div>
+                        <div>
+                            <div class="candidate-name">Priya Nair</div>
+                            <div class="candidate-role">Frontend Engineer · 4 yrs · ₹18–26 LPA</div>
+                        </div>
+                        <button class="invite-btn">Invite</button>
+                    </div>
+                    <div class="candidate-row">
+                        <div class="candidate-avatar" style="background:linear-gradient(135deg,#f59e0b,#fbbf24);">R</div>
+                        <div>
+                            <div class="candidate-name">Rohan Mehta</div>
+                            <div class="candidate-role">Full Stack · 5 yrs · ₹22–32 LPA</div>
+                        </div>
+                        <button class="invite-btn">Invite</button>
+                    </div>
+                    <div style="margin-top:1.25rem; padding-top:1rem; border-top:1px solid #f1f5f9; display:flex; justify-content:space-between; font-size:.78rem; color:#94a3b8; font-weight:600;">
+                        <span><i class="fas fa-circle" style="color:#22c55e; font-size:.55rem;"></i> 240+ active this week</span>
+                        <span>All profiles admin-verified</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats strip -->
+<div class="stats-strip">
+    <div class="container">
+        <div class="row g-4 text-center">
+            <div class="col-6 col-md-3">
+                <div class="stat-item">
+                    <div class="num">2,400+</div>
+                    <div class="lbl">Vetted Candidates</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-item">
+                    <div class="num">800+</div>
+                    <div class="lbl">Companies Hiring</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-item">
+                    <div class="num">72h</div>
+                    <div class="lbl">Avg. Response Time</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-item">
+                    <div class="num">₹0</div>
+                    <div class="lbl">To Get Started</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- How it works -->
+<section class="section" id="how-it-works">
+    <div class="container">
+        <div class="text-center mb-5">
+            <div class="section-tag">How it works</div>
+            <h2 class="section-title">Hire in three simple steps</h2>
+            <p class="section-sub mx-auto">No job boards, no spam applications. Every candidate you see is open to the right opportunity.</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="step-card">
+                    <div class="step-num">01</div>
+                    <h4>Post a job & set your budget</h4>
+                    <p>Define the role, required skills, experience range, and salary upfront. No hidden numbers.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="step-card">
+                    <div class="step-num">02</div>
+                    <h4>Browse & invite candidates</h4>
+                    <p>Filter pre-vetted engineers by skills, experience, and location. Send direct interview invites in one click.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="step-card">
+                    <div class="step-num">03</div>
+                    <h4>Interview & close fast</h4>
+                    <p>Candidates who accept already know the salary and role. Conversations start warmer and close faster.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features -->
+<section class="features" id="features">
+    <div class="container">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-5">
+                <div class="section-tag">Why Nexhire</div>
+                <h2 class="section-title">Built for quality, not quantity</h2>
+                <p class="section-sub">We screen every candidate before they go live. You spend time on conversations, not filtering through noise.</p>
+                <a href="/recruiter/register" class="btn-signup d-inline-flex align-items-center gap-2 mt-4" style="font-size:.95rem; padding:.7rem 1.5rem;">
+                    Create employer account <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+            <div class="col-lg-7">
+                <div class="feature-item">
+                    <div class="feature-icon indigo"><i class="fas fa-user-check"></i></div>
+                    <div>
+                        <h5>Admin-verified talent pool</h5>
+                        <p>Every candidate is manually reviewed before appearing to recruiters. No fake profiles, no passive candidates who never respond.</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon green"><i class="fas fa-rupee-sign"></i></div>
+                    <div>
+                        <h5>Upfront salary — no negotiation games</h5>
+                        <p>Set your budget on the job post. Candidates see it before accepting. You skip 3 rounds of salary discussions.</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon purple"><i class="fas fa-filter"></i></div>
+                    <div>
+                        <h5>Precision filters</h5>
+                        <p>Search by skills, experience, notice period, and location. Reach exactly who you need — not 500 irrelevant applications.</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon amber"><i class="fas fa-bolt"></i></div>
+                    <div>
+                        <h5>Faster time-to-hire</h5>
+                        <p>Candidates on Nexhire are actively open. Average response to an invite is under 72 hours.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+    <div class="container">
+        <h2>Ready to meet your next hire?</h2>
+        <p>Join 800+ companies already finding talent on Nexhire. Free to start.</p>
+        <div class="d-flex flex-wrap gap-3 justify-content-center">
+            <a href="/recruiter/register" class="btn-cta-white">
+                Create employer account <i class="fas fa-arrow-right"></i>
+            </a>
+            <a href="/recruiter/login" class="btn-cta-outline">
+                <i class="fas fa-sign-in-alt"></i> Sign in
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <a href="/" class="footer-brand">Nexhire</a>
+                <p class="footer-text">The premium tech talent marketplace connecting India's top engineers with product-first companies.</p>
+            </div>
+            <div class="col-lg-2 col-6">
+                <div style="font-weight:700; color:#fff; margin-bottom:.875rem; font-size:.875rem;">For Employers</div>
+                <a href="/recruiter/register" class="footer-link">Get Started</a>
+                <a href="/recruiter/login" class="footer-link">Sign In</a>
+            </div>
+            <div class="col-lg-2 col-6">
+                <div style="font-weight:700; color:#fff; margin-bottom:.875rem; font-size:.875rem;">For Candidates</div>
+                <a href="/jobseeker/register" class="footer-link">Create Profile</a>
+                <a href="/jobseeker/login" class="footer-link">Sign In</a>
+            </div>
+            <div class="col-lg-4">
+                <div style="font-weight:700; color:#fff; margin-bottom:.875rem; font-size:.875rem;">Contact</div>
+                <p class="footer-text"><i class="fas fa-envelope me-2"></i>hello@nexhire.in</p>
+            </div>
+        </div>
+        <div class="footer-bottom">&copy; 2025 Nexhire. All rights reserved.</div>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

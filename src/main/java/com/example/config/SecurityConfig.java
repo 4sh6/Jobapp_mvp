@@ -1,9 +1,10 @@
 package com.example.config;
 
 import com.example.security.JwtAuthFilter;
+import com.example.security.RecruiterLoginRateLimitFilter;
 import com.example.service.JobseekerUserDetailsService;
 import com.example.service.recruiter.RecruiterUserDetailsService;
-import com.example.repositary.JobseekerRepository;
+import com.example.repository.JobseekerRepository;
 import com.example.model.Jobseeker;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,11 +23,13 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.logout.CookieClearingLogoutHandler;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.Authentication;
@@ -56,6 +59,9 @@ public class SecurityConfig {
 
     @Autowired
     private JwtAuthFilter jwtAuthFilter;
+
+    @Autowired
+    private RecruiterLoginRateLimitFilter recruiterLoginRateLimitFilter;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -128,15 +134,26 @@ public class SecurityConfig {
     @Bean
     public AuthenticationFailureHandler jobseekerFailureHandler() {
         return (request, response, exception) -> {
-            String email = request.getParameter("username");
             if (exception.getCause() instanceof UsernameNotFoundException ||
                     (exception.getMessage() != null && exception.getMessage().contains("Jobseeker not found"))) {
-                response.sendRedirect("/jobseeker/register?email=" + email
-                        + "&error=Email+not+registered.+Please+sign+up.");
+                // SECURITY: do not expose email in redirect URL (prevents email harvesting via logs/history)
+                response.sendRedirect("/jobseeker/register?error=Email+not+registered.+Please+sign+up.");
             } else {
                 response.sendRedirect("/jobseeker/login?error=Invalid+email+or+password");
             }
         };
+    }
+
+    // ─── H2 Console (dev only) ───
+    @Bean
+    @Order(0)
+    public SecurityFilterChain h2ConsoleSecurity(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/h2-console/**")
+                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+                .csrf(csrf -> csrf.disable())
+                .headers(headers -> headers.frameOptions(frame -> frame.disable()));
+        return http.build();
     }
 
     // ─── Admin REST API (JWT, stateless) ───
@@ -174,8 +191,17 @@ public class SecurityConfig {
                         .defaultSuccessUrl("/admin/dashboard", true)
                         .failureUrl("/admin/login?error")
                 )
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((req, res, e) -> {
+                            boolean hadSession = hasSessionCookie(req);
+                            res.sendRedirect(hadSession
+                                    ? "/admin/login?sessionExpired"
+                                    : "/admin/login");
+                        })
+                )
                 .logout(logout -> logout
                         .logoutUrl("/admin/logout")
+                        .addLogoutHandler(new CookieClearingLogoutHandler("JSESSIONID"))
                         .logoutSuccessUrl("/admin/login?logout"));
 
         return http.build();
@@ -188,6 +214,13 @@ public class SecurityConfig {
         http.userDetailsService(jobseekerUserDetailsService);
         http
                 .securityMatcher("/jobseeker/**", "/jobs/**", "/oauth2/**", "/login/oauth2/**")
+                .headers(headers -> headers
+                        .frameOptions(frame -> frame.deny())
+                        .xssProtection(xss -> xss.disable()) // modern browsers use CSP instead
+                        .contentTypeOptions(ct -> {})        // keep X-Content-Type-Options: nosniff
+                        .httpStrictTransportSecurity(hsts -> hsts
+                                .includeSubDomains(true).maxAgeInSeconds(31536000))
+                )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/jobseeker/register",
@@ -215,9 +248,34 @@ public class SecurityConfig {
                         .successHandler(jobseekerSuccessHandler())
                         .failureUrl("/jobseeker/login?error")
                 )
-                .logout(logout -> logout.logoutSuccessUrl("/jobseeker/login?logout"));
+                // No invalidSessionUrl — handled by the entry point below to distinguish
+                // real session expiry (cookie present, session gone) from first-time access
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((req, res, e) -> {
+                            boolean hadSession = hasSessionCookie(req);
+                            res.sendRedirect(hadSession
+                                    ? "/jobseeker/login?sessionExpired"
+                                    : "/jobseeker/login");
+                        })
+                )
+                .logout(logout -> logout
+                        .logoutUrl("/jobseeker/logout")
+                        // Clear the session cookie on logout so the entry point above
+                        // doesn't mistake a post-logout visit for a session expiry
+                        .addLogoutHandler(new CookieClearingLogoutHandler("JSESSIONID"))
+                        .logoutSuccessUrl("/jobseeker/login?logout"));
 
         return http.build();
+    }
+
+    /** Returns true if the request carries a JSESSIONID cookie (i.e. the user had a session). */
+    private static boolean hasSessionCookie(HttpServletRequest req) {
+        Cookie[] cookies = req.getCookies();
+        if (cookies == null) return false;
+        for (Cookie c : cookies) {
+            if ("JSESSIONID".equals(c.getName())) return true;
+        }
+        return false;
     }
 
     // ─── Recruiter Security ───
@@ -227,15 +285,34 @@ public class SecurityConfig {
         http.userDetailsService(recruiterUserDetailsService);
         http
                 .securityMatcher("/recruiter/**")
+                .headers(headers -> headers
+                        .frameOptions(frame -> frame.deny())
+                        .xssProtection(xss -> xss.disable())
+                        .contentTypeOptions(ct -> {})
+                        .httpStrictTransportSecurity(hsts -> hsts
+                                .includeSubDomains(true).maxAgeInSeconds(31536000))
+                )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/recruiter/register", "/recruiter/login").permitAll()
+                        .requestMatchers("/recruiter/home", "/recruiter/register", "/recruiter/login").permitAll()
                         .anyRequest().hasRole("RECRUITER")
                 )
                 .formLogin(form -> form
                         .loginPage("/recruiter/login")
                         .defaultSuccessUrl("/recruiter/dashboard", true)
                 )
-                .logout(logout -> logout.logoutSuccessUrl("/recruiter/login?logout"));
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((req, res, e) -> {
+                            boolean hadSession = hasSessionCookie(req);
+                            res.sendRedirect(hadSession
+                                    ? "/recruiter/login?sessionExpired"
+                                    : "/recruiter/login");
+                        })
+                )
+                .logout(logout -> logout
+                        .logoutUrl("/recruiter/logout")
+                        .addLogoutHandler(new CookieClearingLogoutHandler("JSESSIONID"))
+                        .logoutSuccessUrl("/recruiter/login?logout"))
+                .addFilterBefore(recruiterLoginRateLimitFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

@@ -1,5 +1,5 @@
 
-package com.example.repositary;
+package com.example.repository;
 
 import com.example.model.Application;
 import com.example.model.Job;

@@ -4,14 +4,16 @@ import com.example.dto.JobseekerProfileDto;
 import com.example.dto.JobseekerRegistrationDto;
 import com.example.model.Jobseeker;
 import com.example.model.JobseekerProfile;
-import com.example.repositary.JobseekerProfileRepository;
-import com.example.repositary.JobseekerRepository;
+import com.example.repository.JobseekerProfileRepository;
+import com.example.repository.JobseekerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -26,26 +28,82 @@ public class JobseekerService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private ReferralService referralService;
+
+    private static final String CODE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
+    @Transactional
     public Jobseeker registerJobseeker(JobseekerRegistrationDto dto) {
         // Normalize email (trim + lowercase) to avoid duplicates due to case/whitespace
         String normalizedEmail = dto.getEmail().trim().toLowerCase();
 
-        // Check if email already exists to avoid unique constraint violation
         Optional<Jobseeker> existing = jobseekerRepository.findByEmail(normalizedEmail);
         if (existing.isPresent()) {
-            throw new IllegalArgumentException("Email already in use: " + normalizedEmail);
+            Jobseeker existingUser = existing.get();
+            if (existingUser.isEmailVerified()) {
+                // Fully registered — check if REJECTED with active 30-day cooldown
+                if ("REJECTED".equals(existingUser.getApprovalStatus())
+                        && existingUser.getRejectedAt() != null
+                        && existingUser.getRejectedAt().isAfter(LocalDateTime.now().minusDays(30))) {
+                    long daysLeft = 30 - java.time.temporal.ChronoUnit.DAYS.between(
+                            existingUser.getRejectedAt(), LocalDateTime.now());
+                    throw new IllegalArgumentException(
+                            "Your profile was rejected. You can re-register after " + daysLeft + " more day(s).");
+                }
+                if (!"REJECTED".equals(existingUser.getApprovalStatus())) {
+                    throw new IllegalArgumentException("Email already in use: " + normalizedEmail);
+                }
+                // REJECTED and cooldown passed — allow re-registration: reset the existing record
+                existingUser.setFullName(dto.getFullName());
+                existingUser.setPassword(passwordEncoder.encode(dto.getPassword()));
+                existingUser.setApprovalStatus("PENDING");
+                existingUser.setRejectionReason(null);
+                existingUser.setRejectedAt(null);
+                existingUser.setEmailVerified(false);
+                return jobseekerRepository.save(existingUser);
+            }
+            // Unverified account (registration was abandoned / OTP failed) — overwrite it
+            // so the user can retry without being permanently blocked
+            existingUser.setFullName(dto.getFullName());
+            existingUser.setPassword(passwordEncoder.encode(dto.getPassword()));
+            return jobseekerRepository.save(existingUser);
         }
 
         Jobseeker jobseeker = new Jobseeker();
         jobseeker.setFullName(dto.getFullName());
         jobseeker.setEmail(normalizedEmail);
         jobseeker.setPassword(passwordEncoder.encode(dto.getPassword()));
+        jobseeker.setReferralCode(generateUniqueReferralCode());
         try {
-            return jobseekerRepository.save(jobseeker);
+            Jobseeker saved = jobseekerRepository.save(jobseeker);
+            linkReferral(dto.getReferredByCode(), saved);
+            return saved;
         } catch (DataIntegrityViolationException ex) {
-            // in case of a race condition someone inserted the same email between the check and save
+            // race condition — another request inserted the same email between check and save
             throw new IllegalArgumentException("Email already in use: " + normalizedEmail);
         }
+    }
+
+    private void linkReferral(String referredByCode, Jobseeker referee) {
+        if (referredByCode == null || referredByCode.isBlank()) return;
+        jobseekerRepository.findByReferralCode(referredByCode.trim().toUpperCase())
+                .ifPresent(referrer -> referralService.createReferral(referrer, referee));
+    }
+
+    /** Generates a unique 8-char alphanumeric referral code (e.g. NXA1B2C3). */
+    private String generateUniqueReferralCode() {
+        for (int attempts = 0; attempts < 10; attempts++) {
+            StringBuilder sb = new StringBuilder("NX");
+            for (int i = 0; i < 6; i++) {
+                sb.append(CODE_CHARS.charAt(SECURE_RANDOM.nextInt(CODE_CHARS.length())));
+            }
+            String code = sb.toString();
+            if (jobseekerRepository.findByReferralCode(code).isEmpty()) return code;
+        }
+        // Fallback: highly unlikely but use timestamp suffix for uniqueness
+        return "NX" + Long.toHexString(System.currentTimeMillis()).toUpperCase().substring(0, 6);
     }
 
     public Optional<Jobseeker> findByEmail(String email) {
@@ -57,8 +115,7 @@ public class JobseekerService {
         JobseekerProfile profile = profileRepository.findById(jobseeker.getId())
                 .orElseGet(() -> {
                     JobseekerProfile p = new JobseekerProfile();
-                    p.setJobseeker(jobseeker);
-                    p.setId(jobseeker.getId());
+                    p.setJobseeker(jobseeker); // @MapsId derives ID automatically — do NOT set manually
                     return p;
                 });
 

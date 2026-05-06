@@ -1,129 +1,430 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
     <meta charset="UTF-8"/>
-    <title>Refer and Earn - Nexhire</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Refer &amp; Earn — Nexhire</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+    <link rel="stylesheet" th:href="@{/css/app.css}"/>
     <style>
-        body { background-color: #f5f6fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .navbar-brand { font-weight: 700; letter-spacing: 0.05em; }
-        .card { border-radius: 1rem; border: none; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .hero-section {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            color: white;
-            padding: 4rem 2rem;
-            border-radius: 1rem 1rem 0 0;
+        /* ── Hero ─────────────────────────────────────────────────── */
+        .ref-hero {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 60%, #a21caf 100%);
+            border-radius: 1.25rem;
+            padding: 2.75rem 2rem 2rem;
+            color: #fff;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 1.75rem;
+        }
+        .ref-hero::before {
+            content: '';
+            position: absolute;
+            top: -60px; right: -60px;
+            width: 260px; height: 260px;
+            background: rgba(255,255,255,.06);
+            border-radius: 50%;
+        }
+        .ref-hero::after {
+            content: '';
+            position: absolute;
+            bottom: -80px; left: 20px;
+            width: 200px; height: 200px;
+            background: rgba(255,255,255,.04);
+            border-radius: 50%;
+        }
+        .ref-hero-inner { position: relative; z-index: 1; }
+
+        .reward-pill {
+            display: inline-flex; align-items: center; gap: .5rem;
+            background: rgba(255,255,255,.15);
+            border: 1px solid rgba(255,255,255,.25);
+            border-radius: 2rem;
+            padding: .35rem 1rem;
+            font-size: .8rem; font-weight: 700;
+            letter-spacing: .3px;
+            margin-bottom: 1.25rem;
+        }
+        .reward-pill span { color: #fde68a; }
+
+        .ref-hero h1 {
+            font-size: 1.75rem; font-weight: 900;
+            line-height: 1.2; margin-bottom: .6rem;
+            letter-spacing: -.4px;
+        }
+        .ref-hero p {
+            font-size: .95rem; opacity: .8;
+            margin-bottom: 1.75rem; max-width: 520px;
+        }
+
+        /* ── Link box ─────────────────────────────────────────────── */
+        .link-box {
+            background: rgba(255,255,255,.1);
+            border: 1.5px solid rgba(255,255,255,.2);
+            border-radius: .85rem;
+            padding: 1rem 1.25rem;
+        }
+        .link-label {
+            font-size: .72rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: .5px;
+            opacity: .65; margin-bottom: .5rem;
+        }
+        .link-value {
+            font-family: 'Courier New', monospace;
+            font-size: .88rem; color: #c7d2fe;
+            word-break: break-all; margin-bottom: 1rem;
+        }
+        .share-row { display: flex; gap: .6rem; flex-wrap: wrap; }
+
+        .btn-share {
+            display: inline-flex; align-items: center; gap: .45rem;
+            padding: .55rem 1.15rem;
+            border-radius: .6rem;
+            font-size: .82rem; font-weight: 700;
+            border: none; cursor: pointer;
+            transition: opacity .15s, transform .1s;
+            white-space: nowrap;
+        }
+        .btn-share:hover { opacity: .88; transform: translateY(-1px); }
+        .btn-copy    { background: #fff;      color: #4f46e5; }
+        .btn-wa      { background: #25D366;   color: #fff; }
+        .btn-li      { background: #0a66c2;   color: #fff; }
+
+        /* ── Stats ────────────────────────────────────────────────── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.75rem;
+        }
+        .stat-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 1rem;
+            padding: 1.25rem 1rem;
             text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,.05);
         }
-        .hero-title { font-weight: 800; font-size: 2.5rem; margin-bottom: 1rem; }
-        .hero-subtitle { font-size: 1.2rem; opacity: 0.9; margin-bottom: 2rem; }
-        .referral-box {
-            background: white; color: #333;
-            padding: 1.5rem; border-radius: 0.75rem;
-            display: inline-block; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        .stat-num  { font-size: 2rem; font-weight: 900; line-height: 1; margin-bottom: .3rem; }
+        .stat-lbl  { font-size: .72rem; color: #64748b; font-weight: 700;
+                     text-transform: uppercase; letter-spacing: .4px; }
+
+        /* ── How it works ─────────────────────────────────────────── */
+        .steps-section {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 1.25rem;
+            padding: 1.75rem 1.5rem;
+            margin-bottom: 1.75rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,.05);
         }
-        .referral-code { font-family: monospace; font-size: 1.5rem; font-weight: bold; color: #d97706; letter-spacing: 2px; }
-        .steps-container { padding: 3rem 2rem; }
-        .step { text-align: center; padding: 1.5rem; }
-        .step-icon {
-            width: 80px; height: 80px;
-            background: #fef3c7; color: #d97706;
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-size: 2.5rem; margin: 0 auto 1.5rem auto;
+        .steps-section h3 {
+            font-weight: 800; font-size: 1.05rem;
+            margin-bottom: 1.5rem; color: #1e293b;
         }
-        .step h4 { font-weight: 700; margin-bottom: 1rem; }
-        .step p { color: #666; }
+        .steps-flow {
+            display: flex;
+            gap: 0;
+            position: relative;
+            overflow-x: auto;
+            padding-bottom: .5rem;
+        }
+        .step-item {
+            flex: 1; min-width: 110px;
+            display: flex; flex-direction: column; align-items: center;
+            text-align: center; position: relative;
+        }
+        /* connector line between steps */
+        .step-item:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            top: 22px; left: 50%;
+            width: 100%; height: 2px;
+            background: linear-gradient(90deg, #c7d2fe, #e0e7ff);
+        }
+        .step-dot {
+            width: 44px; height: 44px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem;
+            margin-bottom: .75rem;
+            z-index: 1;
+            box-shadow: 0 0 0 4px #f8fafc;
+        }
+        .step-item h6 { font-weight: 800; font-size: .82rem; margin-bottom: .25rem; color: #1e293b; }
+        .step-item p  { font-size: .75rem; color: #64748b; margin: 0; line-height: 1.45; }
+
+        /* ── Referral table ───────────────────────────────────────── */
+        .ref-table-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 1.25rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,.05);
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+        .ref-table-header {
+            padding: 1.1rem 1.5rem;
+            border-bottom: 1px solid #f1f5f9;
+            font-weight: 800; font-size: .95rem;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .ref-table table { margin: 0; font-size: .875rem; }
+        .ref-table th {
+            font-size: .72rem; text-transform: uppercase;
+            letter-spacing: .4px; color: #94a3b8;
+            font-weight: 700; border-bottom: 1.5px solid #f1f5f9;
+            background: #f8fafc;
+        }
+        .ref-table td { vertical-align: middle; border-color: #f1f5f9; }
+
+        .badge-ref {
+            padding: .28rem .75rem; border-radius: 2rem;
+            font-size: .72rem; font-weight: 700; display: inline-block;
+        }
+        .b-signed    { background: #eff6ff; color: #1d4ed8; }
+        .b-approved  { background: #f0fdf4; color: #15803d; }
+        .b-hired     { background: #fef3c7; color: #b45309; }
+        .b-paid      { background: #d1fae5; color: #065f46; }
+
+        .empty-ref { text-align: center; padding: 3rem 1rem; color: #94a3b8; }
+        .empty-ref i { font-size: 2.5rem; margin-bottom: .75rem; display: block; }
+
+        /* ── Terms ────────────────────────────────────────────────── */
+        .terms-strip {
+            text-align: center;
+            font-size: .75rem; color: #94a3b8;
+            padding: .75rem 1rem;
+        }
     </style>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
-    <div class="container">
-        <a class="navbar-brand" href="/jobseeker/dashboard">Nexhire</a>
-        <div class="d-flex align-items-center">
-            <a href="/jobseeker/dashboard" class="btn btn-outline-primary me-2">Dashboard</a>
-            <form th:action="@{/logout}" method="post" style="margin: 0;">
-                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                <button class="btn btn-link text-danger text-decoration-none">Sign Out</button>
-            </form>
-        </div>
+
+<aside th:replace="~{fragments/sidebar :: sidebar('refer')}"></aside>
+
+<main class="main-content">
+
+    <!-- Top bar -->
+    <div class="top-bar">
+        <div class="page-title">Refer &amp; Earn</div>
     </div>
-</nav>
 
-<div class="container my-4">
-    <div class="row justify-content-center">
-        <div class="col-md-10">
-            <div class="card">
-                <div class="hero-section">
-                    <h1 class="hero-title"><i class="fas fa-gift me-3"></i>Refer & Earn</h1>
-                    <p class="hero-subtitle">Invite your friends to Nexhire and earn ₹5,000 when they get hired!</p>
-                    <div class="referral-box mt-3">
-                        <div class="text-uppercase small fw-bold text-muted mb-2">Your Unique Link</div>
-                        <div class="referral-code">JOBAPP-REF-<span th:text="${jobseeker.id}">123</span></div>
-                        <button class="btn btn-warning mt-3 w-100 fw-bold" id="copyBtn"
-                                th:onclick="'copyReferralLink(\'JOBAPP-REF-' + ${jobseeker.id} + '\', this)'">
-                            <i class="fas fa-copy me-2"></i>Copy Link
-                        </button>
-                    </div>
-                </div>
+    <!-- ── HERO ──────────────────────────────────────────────────────── -->
+    <div class="ref-hero">
+        <div class="ref-hero-inner">
+            <div class="reward-pill">
+                <i class="fas fa-rupee-sign"></i>
+                <span>₹10,000</span> reward per successful hire
+            </div>
+            <h1>Refer a developer.<br>We'll pay you when they get hired.</h1>
+            <p>Share your unique link with talented friends. When they join Nexhire, get approved, and land a job — you earn ₹10,000 directly to your bank account.</p>
 
-                <div class="card-body p-0">
-                    <div class="steps-container bg-white">
-                        <h3 class="text-center mb-5 fw-bold">How it works</h3>
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="step">
-                                    <div class="step-icon"><i class="fas fa-share-alt"></i></div>
-                                    <h4>1. Share Link</h4>
-                                    <p>Share your unique referral link with your developer friends.</p>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="step">
-                                    <div class="step-icon"><i class="fas fa-user-plus"></i></div>
-                                    <h4>2. They Sign Up</h4>
-                                    <p>Your friends create an account and complete their profile.</p>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="step">
-                                    <div class="step-icon"><i class="fas fa-rupee-sign"></i></div>
-                                    <h4>3. You Earn</h4>
-                                    <p>Once they accept an offer through Nexhire, you get paid.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            <!-- Link + Share buttons -->
+            <div class="link-box">
+                <div class="link-label">Your referral link</div>
+                <div class="link-value" id="refLinkDisplay">Generating…</div>
+                <div class="share-row">
+                    <button class="btn-share btn-copy" id="copyBtn" onclick="copyLink(this)">
+                        <i class="fas fa-copy"></i> Copy Link
+                    </button>
+                    <button class="btn-share btn-wa" onclick="shareWhatsApp()">
+                        <i class="fab fa-whatsapp"></i> Share on WhatsApp
+                    </button>
+                    <button class="btn-share btn-li" onclick="shareLinkedIn()">
+                        <i class="fab fa-linkedin-in"></i> Share on LinkedIn
+                    </button>
                 </div>
+            </div>
+
+            <!-- Referral code small -->
+            <div style="margin-top:.75rem; font-size:.78rem; opacity:.55;">
+                Your code: <strong id="refCodeDisplay" th:text="${jobseeker.referralCode}">—</strong>
             </div>
         </div>
     </div>
-</div>
+
+    <!-- ── STATS ─────────────────────────────────────────────────────── -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-num" style="color:#4f46e5;" th:text="${totalSignedUp}">0</div>
+            <div class="stat-lbl">Signed Up</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num" style="color:#0ea5e9;" th:text="${totalApproved}">0</div>
+            <div class="stat-lbl">Approved</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num" style="color:#d97706;" th:text="${totalHired}">0</div>
+            <div class="stat-lbl">Got Hired</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num" style="color:#059669;" th:text="${rewardsPaid}">0</div>
+            <div class="stat-lbl">Rewards Paid</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num" style="color:#7c3aed;" th:text="${pendingRewards}">0</div>
+            <div class="stat-lbl">Pending Payout</div>
+        </div>
+    </div>
+
+    <!-- ── HOW IT WORKS ──────────────────────────────────────────────── -->
+    <div class="steps-section">
+        <h3><i class="fas fa-route" style="color:#6366f1; margin-right:.5rem;"></i>How it works</h3>
+        <div class="steps-flow">
+            <div class="step-item">
+                <div class="step-dot" style="background:#ede9fe; color:#7c3aed;">
+                    <i class="fas fa-share-alt"></i>
+                </div>
+                <h6>Share your link</h6>
+                <p>Send your unique Nexhire referral link to developer friends.</p>
+            </div>
+            <div class="step-item">
+                <div class="step-dot" style="background:#dbeafe; color:#1d4ed8;">
+                    <i class="fas fa-user-plus"></i>
+                </div>
+                <h6>They sign up</h6>
+                <p>Friend registers using your link and completes their profile.</p>
+            </div>
+            <div class="step-item">
+                <div class="step-dot" style="background:#d1fae5; color:#059669;">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h6>Profile approved</h6>
+                <p>Our team reviews and approves their profile within 1–2 days.</p>
+            </div>
+            <div class="step-item">
+                <div class="step-dot" style="background:#fef3c7; color:#b45309;">
+                    <i class="fas fa-briefcase"></i>
+                </div>
+                <h6>They get hired</h6>
+                <p>Friend accepts an offer through Nexhire.</p>
+            </div>
+            <div class="step-item">
+                <div class="step-dot" style="background:#f0fdf4; color:#15803d;">
+                    <i class="fas fa-rupee-sign"></i>
+                </div>
+                <h6>You earn ₹10,000</h6>
+                <p>We transfer the reward directly to your bank within 30 days.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── REFERRAL LIST ─────────────────────────────────────────────── -->
+    <div class="ref-table-card">
+        <div class="ref-table-header">
+            <span>
+                Your Referrals
+                <span style="font-size:.8rem; color:#94a3b8; font-weight:400;" th:if="${referrals != null}"
+                      th:text="'— ' + ${referrals.size()} + ' total'"></span>
+            </span>
+            <span th:if="${pendingRewards > 0}"
+                  style="background:#fef3c7; color:#b45309; font-size:.75rem; font-weight:700; padding:.25rem .75rem; border-radius:2rem;">
+                ₹<span th:text="${pendingRewards * 10000}">0</span> pending payout
+            </span>
+        </div>
+
+        <div th:if="${referrals == null || referrals.isEmpty()}" class="empty-ref">
+            <i class="fas fa-users"></i>
+            <div style="font-weight:700; margin-bottom:.35rem; color:#475569;">No referrals yet</div>
+            <div style="font-size:.875rem;">Share your link above — every referral brings you closer to ₹10,000.</div>
+        </div>
+
+        <div th:unless="${referrals == null || referrals.isEmpty()}" class="ref-table">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th style="padding:1rem 1.5rem;">Friend</th>
+                        <th>Joined</th>
+                        <th>Status</th>
+                        <th>Your Payout</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="ref : ${referrals}">
+                        <td style="padding:.85rem 1.5rem;">
+                            <div style="font-weight:700; color:#1e293b;" th:text="${ref.referee.fullName}">Name</div>
+                            <div style="font-size:.78rem; color:#94a3b8;" th:text="${ref.referee.email}">email</div>
+                        </td>
+                        <td style="color:#64748b; font-size:.85rem;" th:text="${#temporals.format(ref.createdAt, 'dd MMM yyyy')}">01 Jan 2025</td>
+                        <td>
+                            <span th:switch="${ref.status}">
+                                <span th:case="'SIGNED_UP'"        class="badge-ref b-signed">Signed Up</span>
+                                <span th:case="'PROFILE_APPROVED'" class="badge-ref b-approved">Profile Approved</span>
+                                <span th:case="'HIRED'"            class="badge-ref b-hired">Hired — Payout Pending</span>
+                                <span th:case="'REWARD_PAID'"      class="badge-ref b-paid">Reward Paid ✓</span>
+                            </span>
+                        </td>
+                        <td style="font-weight:800;">
+                            <span th:if="${ref.status == 'REWARD_PAID'}"  style="color:#059669;">₹10,000 ✓</span>
+                            <span th:if="${ref.status == 'HIRED'}"        style="color:#d97706;">₹10,000 pending</span>
+                            <span th:unless="${ref.status == 'HIRED' || ref.status == 'REWARD_PAID'}" style="color:#cbd5e1; font-weight:400;">—</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Terms -->
+    <div class="terms-strip">
+        Reward paid within 30 days of your referral's first working day. One reward per unique hire.
+        &nbsp;·&nbsp; <a href="#" style="color:#6366f1;">Terms &amp; Conditions</a>
+    </div>
+
+</main>
+
 <script>
-function copyReferralLink(code, btn) {
-    var url = window.location.origin + '/jobseeker/register?ref=' + code;
-    navigator.clipboard.writeText(url).then(function() {
-        var original = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-check me-2"></i>Copied!';
-        btn.disabled = true;
-        setTimeout(function() {
-            btn.innerHTML = original;
-            btn.disabled = false;
-        }, 2000);
-    }).catch(function() {
-        // Fallback for older browsers
-        var ta = document.createElement('textarea');
-        ta.value = url;
-        ta.style.position = 'fixed';
-        ta.style.opacity = '0';
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand('copy');
-        document.body.removeChild(ta);
-        btn.innerHTML = '<i class="fas fa-check me-2"></i>Copied!';
-        setTimeout(function() { btn.innerHTML = '<i class="fas fa-copy me-2"></i>Copy Link'; }, 2000);
+    // Inject referral code from server
+    var REF_CODE = /*[[${jobseeker.referralCode}]]*/ null;
+
+    function refUrl() {
+        return window.location.origin + '/jobseeker/register?ref=' + (REF_CODE || '');
+    }
+
+    // Populate link display on load
+    window.addEventListener('DOMContentLoaded', function () {
+        if (REF_CODE) {
+            document.getElementById('refLinkDisplay').textContent = refUrl();
+        } else {
+            document.getElementById('refLinkDisplay').textContent = 'Referral code not generated yet.';
+            document.getElementById('copyBtn').disabled = true;
+        }
     });
-}
+
+    function copyLink(btn) {
+        if (!REF_CODE) return;
+        navigator.clipboard.writeText(refUrl()).then(function () {
+            var orig = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+            btn.disabled = true;
+            setTimeout(function () { btn.innerHTML = orig; btn.disabled = false; }, 2500);
+        }).catch(function () {
+            // fallback for browsers that block clipboard
+            var ta = document.createElement('textarea');
+            ta.value = refUrl();
+            ta.style.cssText = 'position:fixed;opacity:0';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+            setTimeout(function () { btn.innerHTML = '<i class="fas fa-copy"></i> Copy Link'; }, 2500);
+        });
+    }
+
+    function shareWhatsApp() {
+        if (!REF_CODE) return;
+        var text = "Hey! I'm using Nexhire to get hired at top companies. Sign up with my referral link and you could too 👇\n" + refUrl();
+        window.open('https://api.whatsapp.com/send?text=' + encodeURIComponent(text), '_blank');
+    }
+
+    function shareLinkedIn() {
+        if (!REF_CODE) return;
+        var url = 'https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(refUrl());
+        window.open(url, '_blank', 'width=600,height=500');
+    }
 </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

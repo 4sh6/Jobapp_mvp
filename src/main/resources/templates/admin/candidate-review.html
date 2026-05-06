@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Review Candidate - Nexhire Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+    <style>
+        body { background-color: #f5f6fa; font-family: 'Segoe UI', sans-serif; }
+        .navbar-brand { font-weight: 700; }
+        .profile-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; border-radius: 1rem 1rem 0 0; padding: 2rem;
+        }
+        .avatar {
+            width: 72px; height: 72px; border-radius: 50%;
+            background: rgba(255,255,255,0.3); display: flex;
+            align-items: center; justify-content: center;
+            font-size: 2rem; font-weight: 700; flex-shrink: 0;
+        }
+        .info-card { background: white; border-radius: 0 0 1rem 1rem; padding: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .section-title { font-weight: 700; color: #374151; border-bottom: 2px solid #f3f4f6; padding-bottom: 0.5rem; margin-bottom: 1rem; }
+        .skill-chip { background: #ede9fe; color: #5b21b6; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.8rem; font-weight: 600; display: inline-block; margin: 0.2rem; }
+        .status-badge { padding: 0.3rem 0.9rem; border-radius: 999px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; }
+        .badge-pending  { background: #fef3c7; color: #92400e; }
+        .badge-approved { background: #d1fae5; color: #065f46; }
+        .badge-rejected { background: #fee2e2; color: #991b1b; }
+        .badge-hired    { background: #dbeafe; color: #1e40af; }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+    <div class="container">
+        <a class="navbar-brand" href="/admin/dashboard">Nexhire Admin</a>
+        <a href="/admin/jobseekers?status=PENDING" class="btn btn-outline-secondary btn-sm">← Back to Queue</a>
+    </div>
+</nav>
+
+<div class="container my-4" style="max-width: 860px;">
+    <div class="profile-header">
+        <div class="d-flex align-items-center gap-3">
+            <div class="avatar" th:text="${candidate.fullName.substring(0,1).toUpperCase()}">A</div>
+            <div>
+                <h3 class="mb-1 fw-bold" th:text="${candidate.fullName}">Name</h3>
+                <div th:text="${profile != null && profile.profileHeadline != null ? profile.profileHeadline : 'No headline added'}">Headline</div>
+                <div class="mt-2">
+                    <span class="status-badge"
+                          th:classappend="${candidate.approvalStatus == 'PENDING'} ? 'badge-pending' :
+                                          (${candidate.approvalStatus == 'APPROVED'} ? 'badge-approved' :
+                                          (${candidate.approvalStatus == 'HIRED'} ? 'badge-hired' : 'badge-rejected'))"
+                          th:text="${candidate.approvalStatus}">STATUS</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-card mb-4">
+
+        <!-- Action Buttons -->
+        <div class="d-flex gap-2 flex-wrap mb-4 pb-3 border-bottom">
+            <form th:if="${candidate.approvalStatus == 'PENDING' || candidate.approvalStatus == 'REJECTED'}"
+                  th:action="@{'/admin/jobseekers/' + ${candidate.id} + '/approve'}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <button class="btn btn-success fw-bold"><i class="fas fa-check me-2"></i>Approve — Add to Talent Pool</button>
+            </form>
+
+            <button th:if="${candidate.approvalStatus == 'PENDING' || candidate.approvalStatus == 'APPROVED'}"
+                    class="btn btn-danger fw-bold"
+                    onclick="document.getElementById('rejectSection').classList.toggle('d-none')">
+                <i class="fas fa-times me-2"></i>Reject
+            </button>
+
+            <form th:if="${candidate.approvalStatus == 'APPROVED'}"
+                  th:action="@{'/admin/jobseekers/' + ${candidate.id} + '/hire'}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <button class="btn btn-primary fw-bold"><i class="fas fa-trophy me-2"></i>Mark as Hired</button>
+            </form>
+        </div>
+
+        <!-- Reject inline form -->
+        <div id="rejectSection" class="d-none mb-4 p-3 bg-light rounded">
+            <form th:action="@{'/admin/jobseekers/' + ${candidate.id} + '/reject'}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <label class="form-label fw-bold">Rejection reason (optional — emailed to candidate)</label>
+                <textarea name="reason" class="form-control mb-2" rows="2"
+                          placeholder="e.g. Profile incomplete, less than required experience..."></textarea>
+                <button type="submit" class="btn btn-danger">Confirm Reject</button>
+            </form>
+        </div>
+
+        <!-- Contact -->
+        <div class="mb-4">
+            <div class="section-title">Contact</div>
+            <p class="mb-1"><i class="fas fa-envelope me-2 text-muted"></i><span th:text="${candidate.email}">email</span></p>
+            <p class="mb-1"><i class="fas fa-calendar me-2 text-muted"></i>Joined
+                <span th:text="${candidate.createdAt != null ? #temporals.format(candidate.createdAt, 'dd MMM yyyy') : 'N/A'}">Date</span>
+            </p>
+            <p class="mb-0">
+                <span th:if="${candidate.profileCompleted}" class="text-success me-3"><i class="fas fa-check me-1"></i>Profile complete</span>
+                <span th:unless="${candidate.profileCompleted}" class="text-danger me-3"><i class="fas fa-times me-1"></i>Profile incomplete</span>
+                <span th:if="${candidate.resumeUploaded}" class="text-success"><i class="fas fa-check me-1"></i>Resume uploaded</span>
+                <span th:unless="${candidate.resumeUploaded}" class="text-danger"><i class="fas fa-times me-1"></i>No resume</span>
+            </p>
+        </div>
+
+        <!-- Profile details -->
+        <div th:if="${profile != null}">
+            <div class="mb-4">
+                <div class="section-title">About</div>
+                <p th:text="${profile.about ?: 'Not provided'}" class="text-muted">About</p>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="section-title">Experience</div>
+                    <p class="mb-1"><strong>Total:</strong>
+                        <span th:text="${(profile.experienceYears ?: 0) + ' yrs ' + (profile.experienceMonths ?: 0) + ' months'}">0</span>
+                    </p>
+                    <p class="mb-1"><strong>Current Company:</strong> <span th:text="${profile.currentCompany ?: 'N/A'}">—</span></p>
+                    <p class="mb-1"><strong>Current Role:</strong> <span th:text="${profile.currentRole ?: 'N/A'}">—</span></p>
+                    <p class="mb-1"><strong>Past Companies:</strong> <span th:text="${profile.pastCompanies ?: 'N/A'}">—</span></p>
+                </div>
+                <div class="col-md-6">
+                    <div class="section-title">Compensation</div>
+                    <p class="mb-1"><strong>Current CTC:</strong>
+                        <span th:text="${profile.currentCtc != null ? '₹' + profile.currentCtc + ' LPA' : 'N/A'}">—</span>
+                    </p>
+                    <p class="mb-1"><strong>Expected CTC:</strong>
+                        <span th:text="${profile.expectedCtc != null ? '₹' + profile.expectedCtc + ' LPA' : 'N/A'}">—</span>
+                    </p>
+                    <p class="mb-1"><strong>Notice Period:</strong>
+                        <span th:text="${profile.noticePeriodDays != null ? profile.noticePeriodDays + ' days' : 'N/A'}">—</span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <div class="section-title">Primary Skills</div>
+                <div th:if="${profile.primarySkills != null}">
+                    <span th:each="skill : ${#strings.arraySplit(profile.primarySkills, ',')}"
+                          th:text="${skill.trim()}" class="skill-chip">Skill</span>
+                </div>
+                <p th:unless="${profile.primarySkills != null}" class="text-muted">Not provided</p>
+            </div>
+
+            <div class="mb-4">
+                <div class="section-title">Other Skills</div>
+                <div th:if="${profile.skills != null}">
+                    <span th:each="skill : ${#strings.arraySplit(profile.skills, ',')}"
+                          th:text="${skill.trim()}" class="skill-chip" style="background:#e0f2fe; color:#0369a1;">Skill</span>
+                </div>
+                <p th:unless="${profile.skills != null}" class="text-muted">Not provided</p>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="section-title">Education</div>
+                    <p class="mb-1"><strong>Qualification:</strong> <span th:text="${profile.highestEducation ?: 'N/A'}">—</span></p>
+                    <p class="mb-1"><strong>Field:</strong> <span th:text="${profile.fieldOfStudy ?: 'N/A'}">—</span></p>
+                    <p class="mb-1"><strong>Institution:</strong> <span th:text="${profile.institution ?: 'N/A'}">—</span></p>
+                    <p class="mb-0"><strong>Year:</strong> <span th:text="${profile.graduationYear ?: 'N/A'}">—</span></p>
+                </div>
+                <div class="col-md-6">
+                    <div class="section-title">Job Preferences</div>
+                    <p class="mb-1"><strong>Preferred Locations:</strong> <span th:text="${profile.preferredLocations ?: 'N/A'}">—</span></p>
+                    <p class="mb-0"><strong>Work Mode:</strong> <span th:text="${profile.workMode ?: 'N/A'}">—</span></p>
+                </div>
+            </div>
+        </div>
+
+        <div th:unless="${profile != null}" class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle me-2"></i>This candidate has not completed their profile yet.
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

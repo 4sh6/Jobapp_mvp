@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
@@ -46,8 +47,12 @@
                                      (${invite.status.name() == 'ACCEPTED'} ? ' badge-accepted' : ' badge-declined')"
                       th:text="${invite.status.name()}">PENDING</span>
               </div>
-              <div class="person-meta">
+              <!-- Email only shown after candidate accepts -->
+              <div class="person-meta" th:if="${invite.status.name() == 'ACCEPTED'}">
                 <span><i class="fas fa-envelope"></i><span th:text="${invite.jobseeker.email}">email</span></span>
+              </div>
+              <div class="person-meta" th:unless="${invite.status.name() == 'ACCEPTED'}">
+                <span style="color:#94a3b8;font-size:0.8rem;"><i class="fas fa-lock me-1"></i>Contact hidden until candidate accepts</span>
               </div>
             </div>
 

@@ -1,4 +1,4 @@
-package com.example.repositary;
+package com.example.repository;
 
 import com.example.model.PasswordResetToken;
 import org.springframework.data.jpa.repository.JpaRepository;

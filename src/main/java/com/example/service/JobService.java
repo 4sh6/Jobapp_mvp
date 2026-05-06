@@ -3,7 +3,7 @@ package com.example.service;
 import com.example.dto.JobDto;
 import com.example.model.Job;
 import com.example.model.recruiter.Recruiter;
-import com.example.repositary.JobRepository;
+import com.example.repository.JobRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,6 +23,7 @@ public class JobService {
 
     @Transactional
     public Job createJob(JobDto dto, Recruiter recruiter) {
+        validateSalaryRange(dto);
         Job job = new Job();
         job.setTitle(dto.getTitle());
         job.setDescription(dto.getDescription());
@@ -43,8 +44,22 @@ public class JobService {
         return saved;
     }
 
+    private void validateSalaryRange(JobDto dto) {
+        if (dto.getSalaryMin() != null && dto.getSalaryMax() != null
+                && dto.getSalaryMin() > dto.getSalaryMax()) {
+            throw new IllegalArgumentException(
+                    "Minimum salary cannot be greater than maximum salary.");
+        }
+        if (dto.getExperienceMin() != null && dto.getExperienceMax() != null
+                && dto.getExperienceMin() > dto.getExperienceMax()) {
+            throw new IllegalArgumentException(
+                    "Minimum experience cannot be greater than maximum experience.");
+        }
+    }
+
     @Transactional
     public Job updateJob(Long id, JobDto dto, Recruiter recruiter) {
+        validateSalaryRange(dto);
         Job job = jobRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Job not found"));
 

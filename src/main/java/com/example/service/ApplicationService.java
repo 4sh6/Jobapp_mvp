@@ -4,7 +4,7 @@ package com.example.service;
 import com.example.model.Application;
 import com.example.model.Job;
 import com.example.model.Jobseeker;
-import com.example.repositary.ApplicationRepository;
+import com.example.repository.ApplicationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

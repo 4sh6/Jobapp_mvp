@@ -67,6 +67,7 @@ public class JobseekerProfile {
     @Column(name = "notice_period_days")
     private Integer noticePeriodDays;
 
+
     // Getters and Setters
 
     public Long getId() {
@@ -173,4 +174,5 @@ public class JobseekerProfile {
 
     public Integer getNoticePeriodDays() { return noticePeriodDays; }
     public void setNoticePeriodDays(Integer noticePeriodDays) { this.noticePeriodDays = noticePeriodDays; }
+
 }

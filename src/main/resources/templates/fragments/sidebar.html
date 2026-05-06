@@ -12,11 +12,13 @@
 
 <aside th:fragment="sidebar(activePage)" class="sidebar">
 
-    <div class="sidebar-logo">
-        <h2>Nexhire</h2>
-        <div class="user-name" th:text="${jobseeker != null ? jobseeker.fullName : 'My Account'}">User Name</div>
-        <span class="user-role">Jobseeker</span>
-    </div>
+    <a href="/jobseeker/dashboard" class="sidebar-logo" style="text-decoration:none;">
+        <div class="sidebar-logo-mark">N</div>
+        <div class="sidebar-logo-text">
+            <h2>Nexhire</h2>
+            <div class="user-name" th:text="${jobseeker != null ? jobseeker.fullName : 'My Account'}">User Name</div>
+        </div>
+    </a>
 
     <div class="nav-section-label">Main</div>
     <ul class="nav-menu">
@@ -74,9 +76,10 @@
     </ul>
 
     <div class="sidebar-footer">
-        <form th:action="@{/logout}" method="post" class="logout-form">
+        <form th:action="@{/jobseeker/logout}" method="post" class="logout-form"
+              onsubmit="return confirm('Are you sure you want to sign out?');">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-            <button type="submit"><i class="fas fa-sign-out-alt" style="margin-right:.4rem;"></i>Sign Out</button>
+            <button type="submit"><i class="fas fa-sign-out-alt"></i>Sign Out</button>
         </form>
     </div>
 

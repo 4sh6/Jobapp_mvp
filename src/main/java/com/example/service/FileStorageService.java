@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.UUID;
 
 @Service
 public class FileStorageService {
@@ -34,9 +35,15 @@ public class FileStorageService {
                 throw new IllegalArgumentException("Failed to store empty file.");
             }
 
-            String originalFilename = file.getOriginalFilename();
-            String fileName = "resume_" + jobseekerId + "_" + System.currentTimeMillis() + "_" + originalFilename;
-            Path targetLocation = this.fileStorageLocation.resolve(fileName);
+            // SECURITY: use a random UUID filename to prevent path traversal.
+            // The original filename is stored in the Resume entity for display/download purposes.
+            String fileName = "resume_" + jobseekerId + "_" + UUID.randomUUID() + ".pdf";
+            Path targetLocation = this.fileStorageLocation.resolve(fileName).normalize();
+
+            // SECURITY: ensure the resolved path stays within the upload directory
+            if (!targetLocation.startsWith(this.fileStorageLocation)) {
+                throw new IllegalArgumentException("Invalid file path detected.");
+            }
 
             Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
 
@@ -53,13 +60,19 @@ public class FileStorageService {
     public Resource loadFileAsResource(String fileName) {
         try {
             Path filePath = this.fileStorageLocation.resolve(fileName).normalize();
+
+            // SECURITY: prevent path traversal — reject any path that escapes the upload directory
+            if (!filePath.startsWith(this.fileStorageLocation)) {
+                throw new RuntimeException("Access denied: invalid file path.");
+            }
+
             Resource resource = new UrlResource(filePath.toUri());
             if (resource.exists() && resource.isReadable()) {
                 return resource;
             }
-            throw new RuntimeException("File not found: " + fileName);
+            throw new RuntimeException("File not found.");
         } catch (MalformedURLException ex) {
-            throw new RuntimeException("File not found: " + fileName, ex);
+            throw new RuntimeException("File not found.", ex);
         }
     }
 }

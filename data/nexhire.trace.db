@@ -1,0 +1,5 @@
+2026-04-08 11:47:44.379972+05:30 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement "[*]\\\000d\000a\000d\000aSELECT COUNT(*) FROM JOBSEEKERS"; SQL statement:
+\
+
+SELECT COUNT(*) FROM JOBSEEKERS [42000-232]

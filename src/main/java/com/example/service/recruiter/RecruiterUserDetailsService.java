@@ -1,7 +1,7 @@
 package com.example.service.recruiter;
 
 import com.example.model.recruiter.Recruiter;
-import com.example.repositary.recruiter.RecruiterRepository;
+import com.example.repository.recruiter.RecruiterRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

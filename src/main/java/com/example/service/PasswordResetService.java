@@ -2,8 +2,8 @@ package com.example.service;
 
 import com.example.model.Jobseeker;
 import com.example.model.PasswordResetToken;
-import com.example.repositary.JobseekerRepository;
-import com.example.repositary.PasswordResetTokenRepository;
+import com.example.repository.JobseekerRepository;
+import com.example.repository.PasswordResetTokenRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;

@@ -1,7 +1,7 @@
 package com.example.service;
 
 import com.example.model.EventLog;
-import com.example.repositary.EventLogRepository;
+import com.example.repository.EventLogRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

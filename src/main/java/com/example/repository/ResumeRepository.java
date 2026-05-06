@@ -1,5 +1,5 @@
 
-package com.example.repositary;
+package com.example.repository;
 
 import com.example.model.Resume;
 import org.springframework.data.jpa.repository.JpaRepository;
