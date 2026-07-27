@@ -34,6 +34,7 @@ public class JobseekerInviteController {
 
         List<JobInvite> pendingInvites = inviteRepository.findByJobseeker(jobseeker).stream()
                 .filter(inv -> inv.getStatus() == InviteStatus.PENDING)
+                .filter(inv -> inv.getJob().isActive()) // hide invites whose job was closed
                 .collect(Collectors.toList());
 
         model.addAttribute("jobseeker", jobseeker);
@@ -64,6 +65,12 @@ public class JobseekerInviteController {
 
         if (principal == null || !invite.getJobseeker().getEmail().equals(principal.getName())) {
             return "redirect:/jobseeker/login";
+        }
+
+        if (!invite.getJob().isActive() || !"PUBLISHED".equals(invite.getJob().getStatus())) {
+            ra.addFlashAttribute("error",
+                    "This position has been closed by the company, so the invitation is no longer available.");
+            return "redirect:/jobseeker/interview-requests";
         }
 
         invite.setStatus(InviteStatus.ACCEPTED);

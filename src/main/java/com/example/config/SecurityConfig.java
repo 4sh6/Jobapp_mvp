@@ -124,6 +124,15 @@ public class SecurityConfig {
                     return;
                 }
             }
+
+            // Fully onboarded — return to the page they originally tried to reach
+            // (e.g. clicked ATS Checker on the homepage while logged out)
+            var savedRequest = new org.springframework.security.web.savedrequest.HttpSessionRequestCache()
+                    .getRequest(request, response);
+            if (savedRequest != null && "GET".equalsIgnoreCase(savedRequest.getMethod())) {
+                response.sendRedirect(savedRequest.getRedirectUrl());
+                return;
+            }
             response.sendRedirect("/jobseeker/dashboard");
         };
     }
@@ -252,6 +261,11 @@ public class SecurityConfig {
                 // real session expiry (cookie present, session gone) from first-time access
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((req, res, e) -> {
+                            // For ATS Checker, always redirect to login cleanly (no session expired message)
+                            if (req.getRequestURI().contains("/ats-checker")) {
+                                res.sendRedirect("/jobseeker/login");
+                                return;
+                            }
                             boolean hadSession = hasSessionCookie(req);
                             res.sendRedirect(hadSession
                                     ? "/jobseeker/login?sessionExpired"

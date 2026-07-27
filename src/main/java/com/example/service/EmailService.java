@@ -22,7 +22,7 @@ public class EmailService {
      * Reads MAIL_USERNAME env var directly (same source as spring.mail.username).
      * Must match the authenticated SMTP account for Gmail.
      */
-    @Value("${MAIL_USERNAME:noreply@nexhire.in}")
+    @Value("${MAIL_USERNAME:noreply@koderhyre.tech}")
     private String fromAddress;
 
     public void sendPasswordReset(String to, String resetLink) {
@@ -34,7 +34,7 @@ public class EmailService {
         SimpleMailMessage msg = new SimpleMailMessage();
         msg.setFrom(fromAddress);
         msg.setTo(to);
-        msg.setSubject("Reset your Nexhire password");
+        msg.setSubject("Reset your KoderHyre password");
         msg.setText("Click the link below to reset your password. It expires in 1 hour.\n\n" + resetLink
                 + "\n\nIf you did not request this, ignore this email.");
         try {
@@ -60,7 +60,7 @@ public class EmailService {
         msg.setText("Hi " + candidateName + ",\n\n"
                 + companyName + " has invited you to interview for the role of " + jobTitle + ".\n\n"
                 + "Log in to your dashboard to review and respond:\n" + dashboardUrl + "\n\n"
-                + "— The Nexhire Team");
+                + "— The KoderHyre Team");
         try {
             mailSender.send(msg);
             log.info("Sent invite notification to {}", to);
@@ -91,7 +91,7 @@ public class EmailService {
                 + companyName + " has updated your application status for " + jobTitle + ".\n\n"
                 + "New status: " + friendlyStatus + "\n\n"
                 + "View your applications:\n" + dashboardUrl + "\n\n"
-                + "— The Nexhire Team");
+                + "— The KoderHyre Team");
         try {
             mailSender.send(msg);
             log.info("Sent status update email to {} — status: {}", to, friendlyStatus);
@@ -108,13 +108,13 @@ public class EmailService {
         SimpleMailMessage msg = new SimpleMailMessage();
         msg.setFrom(fromAddress);
         msg.setTo(to);
-        msg.setSubject("Your profile has been approved — Nexhire");
+        msg.setSubject("Your profile has been approved — KoderHyre");
         msg.setText("Hi " + candidateName + ",\n\n"
                 + "Great news! Our team has reviewed your profile and it has been approved.\n\n"
-                + "You are now visible to top recruiters on Nexhire. "
+                + "You are now visible to top recruiters on KoderHyre. "
                 + "Recruiters will reach out to you directly with interview opportunities.\n\n"
                 + "Make sure your profile and resume are up to date to maximise your chances.\n\n"
-                + "— The Nexhire Team");
+                + "— The KoderHyre Team");
         try {
             mailSender.send(msg);
             log.info("Sent profile approval email to {}", to);
@@ -131,13 +131,13 @@ public class EmailService {
         SimpleMailMessage msg = new SimpleMailMessage();
         msg.setFrom(fromAddress);
         msg.setTo(to);
-        msg.setSubject("Update on your Nexhire profile review");
+        msg.setSubject("Update on your KoderHyre profile review");
         msg.setText("Hi " + candidateName + ",\n\n"
-                + "Thank you for applying to join Nexhire's curated talent pool.\n\n"
+                + "Thank you for applying to join KoderHyre's curated talent pool.\n\n"
                 + "After reviewing your profile, we are unable to approve it at this time.\n\n"
                 + (reason != null && !reason.isBlank() ? "Reason: " + reason + "\n\n" : "")
                 + "You are welcome to update your profile and reapply after 30 days.\n\n"
-                + "— The Nexhire Team");
+                + "— The KoderHyre Team");
         try {
             mailSender.send(msg);
             log.info("Sent profile rejection email to {}", to);
@@ -168,7 +168,7 @@ public class EmailService {
                 + "In the meantime, prepare to discuss your experience with:\n"
                 + requiredSkills + "\n\n"
                 + "View all your interview requests here:\n" + dashboardUrl + "\n\n"
-                + "Best of luck!\n— The Nexhire Team");
+                + "Best of luck!\n— The KoderHyre Team");
         try {
             mailSender.send(msg);
             log.info("Sent acceptance confirmation to candidate {}", to);
@@ -205,7 +205,7 @@ public class EmailService {
                 + "Email: " + candidateEmail + "\n\n"
                 + "View their full profile and resume:\n" + candidateProfileUrl + "\n\n"
                 + "Reach out to schedule the interview.\n\n"
-                + "— The Nexhire Team");
+                + "— The KoderHyre Team");
         try {
             mailSender.send(msg);
             log.info("Sent acceptance notification to recruiter {}", to);
@@ -222,12 +222,12 @@ public class EmailService {
         SimpleMailMessage msg = new SimpleMailMessage();
         msg.setFrom(fromAddress);
         msg.setTo(to);
-        msg.setSubject("Your recruiter account is approved — Nexhire");
+        msg.setSubject("Your recruiter account is approved — KoderHyre");
         msg.setText("Hi " + recruiterName + ",\n\n"
-                + "Your recruiter account on Nexhire has been approved!\n\n"
+                + "Your recruiter account on KoderHyre has been approved!\n\n"
                 + "You can now log in and start posting jobs and browsing our curated talent pool.\n\n"
                 + "Log in at: [your domain]/recruiter/login\n\n"
-                + "— The Nexhire Team");
+                + "— The KoderHyre Team");
         try {
             mailSender.send(msg);
             log.info("Sent recruiter approval email to {}", to);
@@ -244,13 +244,13 @@ public class EmailService {
         SimpleMailMessage msg = new SimpleMailMessage();
         msg.setFrom(fromAddress);
         msg.setTo(to);
-        msg.setSubject("Update on your Nexhire recruiter account");
+        msg.setSubject("Update on your KoderHyre recruiter account");
         msg.setText("Hi " + recruiterName + ",\n\n"
-                + "Thank you for registering as a recruiter on Nexhire.\n\n"
+                + "Thank you for registering as a recruiter on KoderHyre.\n\n"
                 + "After reviewing your account details, we are unable to approve your account at this time.\n\n"
                 + "If you believe this is an error or would like to provide more information, "
-                + "please contact us at support@nexhire.in.\n\n"
-                + "— The Nexhire Team");
+                + "please contact us at support@koderhyre.tech.\n\n"
+                + "— The KoderHyre Team");
         try {
             mailSender.send(msg);
             log.info("Sent recruiter rejection email to {}", to);

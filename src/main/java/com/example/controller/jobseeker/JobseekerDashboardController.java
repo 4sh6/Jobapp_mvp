@@ -58,6 +58,7 @@ public class JobseekerDashboardController {
         List<JobInvite> allInvites = inviteRepository.findByJobseeker(jobseeker);
         List<JobInvite> pendingInvites = allInvites.stream()
                 .filter(inv -> inv.getStatus() == InviteStatus.PENDING)
+                .filter(inv -> inv.getJob().isActive()) // hide invites whose job was closed
                 .collect(Collectors.toList());
 
         if (!jobseeker.isProfileCompleted()) {
@@ -348,8 +349,8 @@ public class JobseekerDashboardController {
         if (!newPassword.equals(confirmPassword)) {
             return "redirect:/jobseeker/account?error=New+passwords+do+not+match";
         }
-        if (newPassword.length() < 9) {
-            return "redirect:/jobseeker/account?error=Password+must+be+at+least+9+characters";
+        if (newPassword.length() < 8) {
+            return "redirect:/jobseeker/account?error=Password+must+be+at+least+8+characters";
         }
         jobseeker.setPassword(passwordEncoder.encode(newPassword));
         jobseekerRepository.save(jobseeker);
@@ -447,6 +448,8 @@ public class JobseekerDashboardController {
     public String viewReferAndEarn(Principal principal, Model model) {
         if (principal == null) return "redirect:/jobseeker/login";
         Jobseeker jobseeker = jobseekerRepository.findByEmail(principal.getName()).orElseThrow();
+        // Accounts created before referral codes existed (or via Google) may not have one yet
+        jobseekerService.ensureReferralCode(jobseeker);
 
         var referrals = referralService.getReferralsByReferrer(jobseeker);
         long signedUp       = referrals.stream().filter(r -> !r.getStatus().equals("")).count();

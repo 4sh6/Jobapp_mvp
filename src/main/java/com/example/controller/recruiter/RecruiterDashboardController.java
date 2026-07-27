@@ -39,6 +39,11 @@ public class RecruiterDashboardController extends RecruiterBaseController {
 
         Recruiter recruiter = getRecruiter(userDetails);
 
+        if (recruiter.isSuspended()) {
+            model.addAttribute("recruiter", recruiter);
+            model.addAttribute("status", "Suspended");
+            return "recruiter/pending-approval";
+        }
         if (!ActivationStatus.ACTIVE.equals(recruiter.getActivationStatus())) {
             model.addAttribute("recruiter", recruiter);
             model.addAttribute("status", recruiter.getActivationStatus());

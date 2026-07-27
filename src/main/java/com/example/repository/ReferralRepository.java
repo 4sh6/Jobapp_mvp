@@ -16,4 +16,8 @@ public interface ReferralRepository extends JpaRepository<Referral, Long> {
     List<Referral> findByStatusOrderByCreatedAtDesc(String status);
 
     List<Referral> findAllByOrderByCreatedAtDesc();
+
+    void deleteByReferrer(Jobseeker referrer);
+
+    void deleteByReferee(Jobseeker referee);
 }

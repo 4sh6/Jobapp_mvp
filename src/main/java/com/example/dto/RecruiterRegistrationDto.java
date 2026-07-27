@@ -7,26 +7,26 @@ import jakarta.validation.constraints.Size;
 
 public class RecruiterRegistrationDto {
 
-    @NotBlank
+    @NotBlank(message = "Your name is required")
     private String name;
 
-    @Email
-    @NotBlank
+    @Email(message = "Please enter a valid email address")
+    @NotBlank(message = "Work email is required")
     private String email;
 
-    @NotBlank
-    @Size(min = 8, max = 100)
+    @NotBlank(message = "Password is required")
+    @Size(min = 8, max = 100, message = "Password must be at least 8 characters")
     private String password;
 
-    @NotBlank
+    @NotBlank(message = "Company name is required")
     private String companyName;
 
     private String website;
 
-    @NotBlank
+    @NotBlank(message = "Job title is required")
     private String jobTitle;
 
-    @NotBlank
+    @NotBlank(message = "Phone number is required")
     private String phoneNumber;
 
     public String getName() {

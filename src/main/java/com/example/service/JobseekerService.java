@@ -92,6 +92,16 @@ public class JobseekerService {
                 .ifPresent(referrer -> referralService.createReferral(referrer, referee));
     }
 
+    /** Ensures the jobseeker has a referral code, generating one if missing (e.g. Google signups). */
+    @Transactional
+    public String ensureReferralCode(Jobseeker jobseeker) {
+        if (jobseeker.getReferralCode() == null || jobseeker.getReferralCode().isBlank()) {
+            jobseeker.setReferralCode(generateUniqueReferralCode());
+            jobseekerRepository.save(jobseeker);
+        }
+        return jobseeker.getReferralCode();
+    }
+
     /** Generates a unique 8-char alphanumeric referral code (e.g. NXA1B2C3). */
     private String generateUniqueReferralCode() {
         for (int attempts = 0; attempts < 10; attempts++) {

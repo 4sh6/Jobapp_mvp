@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 public class StartupSecurityValidator {
 
     private static final String DEFAULT_ADMIN_PASSWORD = "admin123";
-    private static final String DEFAULT_JWT_SECRET_PREFIX = "nexhire-dev-only";
+    private static final String DEFAULT_JWT_SECRET_PREFIX = "koderhyre-dev-only";
 
     @Value("${admin.password}")
     private String adminPassword;

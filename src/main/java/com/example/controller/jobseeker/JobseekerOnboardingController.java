@@ -149,6 +149,14 @@ public class JobseekerOnboardingController {
 
         session.removeAttribute("pending_onboarding_email");
         redirectAttrs.addFlashAttribute("showWelcomeBanner", true);
+
+        // If ATS Checker was the trigger, redirect there after completing onboarding
+        String next = (String) session.getAttribute("onboarding_next");
+        if ("ats-checker".equals(next)) {
+            session.removeAttribute("onboarding_next");
+            return "redirect:/jobseeker/ats-checker";
+        }
+
         return "redirect:/jobseeker/dashboard";
     }
 

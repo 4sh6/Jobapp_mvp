@@ -2,9 +2,12 @@ package com.example.config;
 
 import com.example.model.Jobseeker;
 import com.example.repository.JobseekerRepository;
+import com.example.service.JobseekerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -23,6 +26,9 @@ public class JobseekerOAuth2UserService extends DefaultOAuth2UserService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private JobseekerService jobseekerService;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) {
@@ -46,12 +52,21 @@ public class JobseekerOAuth2UserService extends DefaultOAuth2UserService {
                     return jobseekerRepository.save(js);
                 });
 
+        // SECURITY: blocked accounts must not bypass the block via Google login
+        if (!jobseeker.isActive()) {
+            throw new OAuth2AuthenticationException(
+                    new OAuth2Error("account_disabled"), "Account is disabled");
+        }
+
         // Make sure existing LOCAL users that now use Google are marked verified
         if (!jobseeker.isEmailVerified()) {
             jobseeker.setEmailVerified(true);
             jobseeker.setVerifiedAt(LocalDateTime.now());
             jobseekerRepository.save(jobseeker);
         }
+
+        // Google signups skip the normal registration path — make sure they get a referral code
+        jobseekerService.ensureReferralCode(jobseeker);
 
         return new org.springframework.security.oauth2.core.user.DefaultOAuth2User(
                 List.of(new SimpleGrantedAuthority("ROLE_JOBSEEKER")),

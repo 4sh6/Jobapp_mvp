@@ -5,8 +5,14 @@ import com.example.model.Job;
 import com.example.model.Jobseeker;
 import com.example.model.recruiter.Recruiter;
 import com.example.repository.ApplicationRepository;
+import com.example.repository.EmailOtpRepository;
+import com.example.repository.JobInviteRepository;
 import com.example.repository.JobRepository;
+import com.example.repository.JobseekerProfileRepository;
 import com.example.repository.JobseekerRepository;
+import com.example.repository.PasswordResetTokenRepository;
+import com.example.repository.ReferralRepository;
+import com.example.repository.ResumeRepository;
 import com.example.repository.recruiter.RecruiterRepository;
 import com.example.service.EmailService;
 import com.example.service.EventLogService;
@@ -33,6 +39,12 @@ public class AdminApiController {
     @Autowired private RecruiterRepository recruiterRepository;
     @Autowired private JobRepository jobRepository;
     @Autowired private ApplicationRepository applicationRepository;
+    @Autowired private JobInviteRepository jobInviteRepository;
+    @Autowired private ReferralRepository referralRepository;
+    @Autowired private JobseekerProfileRepository jobseekerProfileRepository;
+    @Autowired private ResumeRepository resumeRepository;
+    @Autowired private EmailOtpRepository emailOtpRepository;
+    @Autowired private PasswordResetTokenRepository passwordResetTokenRepository;
     @Autowired private EventLogService eventLogService;
     @Autowired private EmailService emailService;
     @Autowired private ReferralService referralService;
@@ -140,6 +152,15 @@ public class AdminApiController {
         if (js == null) return ResponseEntity.notFound().build();
         eventLogService.log("admin_delete_user", null, id, null,
                 "Admin " + adminName(principal) + " deleted user " + js.getEmail());
+        // Remove dependent rows first — they hold FK references to the jobseeker
+        applicationRepository.deleteByJobseeker(js);
+        jobInviteRepository.deleteByJobseeker(js);
+        referralRepository.deleteByReferee(js);
+        referralRepository.deleteByReferrer(js);
+        resumeRepository.findById(id).ifPresent(resumeRepository::delete);
+        jobseekerProfileRepository.findById(id).ifPresent(jobseekerProfileRepository::delete);
+        emailOtpRepository.deleteByEmail(js.getEmail());
+        passwordResetTokenRepository.deleteByEmail(js.getEmail());
         jobseekerRepository.deleteById(id);
         return ResponseEntity.ok(Map.of("message", "User deleted"));
     }
@@ -167,6 +188,9 @@ public class AdminApiController {
         if (job == null) return ResponseEntity.notFound().build();
         eventLogService.log("admin_delete_job", id, null, null,
                 "Admin " + adminName(principal) + " deleted job: " + job.getTitle());
+        // Remove dependent rows first — they hold FK references to the job
+        applicationRepository.deleteByJob(job);
+        jobInviteRepository.deleteByJob(job);
         jobRepository.deleteById(id);
         return ResponseEntity.ok(Map.of("message", "Job deleted"));
     }

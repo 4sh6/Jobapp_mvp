@@ -3,7 +3,6 @@ package com.example.service.recruiter;
 import com.example.model.recruiter.Recruiter;
 import com.example.repository.recruiter.RecruiterRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.*;
 import org.springframework.stereotype.Service;
@@ -23,10 +22,8 @@ public class RecruiterUserDetailsService implements UserDetailsService {
                 .orElseThrow(() ->
                         new UsernameNotFoundException("Recruiter not found"));
 
-        // Block login if recruiter not approved
-        if (!"Active".equalsIgnoreCase(recruiter.getActivationStatus())) {
-            throw new DisabledException("Recruiter not approved yet");
-        }
+        // Pending/Rejected/Suspended recruiters may still log in — the dashboard
+        // shows them their status page, and all actions are gated by getActiveRecruiter().
 
         return new User(
                 recruiter.getEmail(),

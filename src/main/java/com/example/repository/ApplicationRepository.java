@@ -27,4 +27,8 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
 
     @Query("SELECT COUNT(a) FROM Application a WHERE a.job.recruiter = :recruiter AND a.status = 'HIRED'")
     long countHiredByJobRecruiter(@Param("recruiter") Recruiter recruiter);
+
+    void deleteByJobseeker(Jobseeker jobseeker);
+
+    void deleteByJob(Job job);
 }

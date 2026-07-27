@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Create Account - Nexhire</title>
+    <title>Create Account - KoderHyre</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
     <style>
@@ -80,7 +80,7 @@
 <body>
 <div class="auth-card">
     <div class="auth-header">
-        <h1><a href="/" style="text-decoration:none; color:inherit;">Nexhire</a></h1>
+        <h1><a href="/" style="text-decoration:none; color:inherit;">KoderHyre</a></h1>
         <p>Join India's top 1% tech talent platform</p>
     </div>
 
@@ -108,7 +108,7 @@
              style="background:#f0fdf4; border:1.5px solid #86efac; border-radius:.75rem; padding:.85rem 1.1rem; margin-bottom:1rem; display:flex; align-items:center; gap:.75rem;">
             <i class="fas fa-user-friends" style="color:#16a34a; font-size:1rem; flex-shrink:0;"></i>
             <div style="font-size:.875rem; color:#15803d;">
-                You were invited by a friend! Sign up to join Nexhire's curated talent network.
+                You were invited by a friend! Sign up to join KoderHyre's curated talent network.
             </div>
         </div>
 
@@ -121,7 +121,9 @@
                 <input type="text" class="form-control" th:field="*{fullName}"
                        th:classappend="${#fields.hasErrors('fullName')} ? 'is-invalid' : ''"
                        placeholder="Enter your name" autocomplete="name" required/>
-                <div class="invalid-feedback" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}"></div>
+                <div class="invalid-feedback" id="fullNameError"
+                     th:style="${#fields.hasErrors('fullName')} ? '' : 'display:none'"
+                     th:text="${#fields.hasErrors('fullName')} ? ${#fields.errors('fullName')[0]} : ''"></div>
             </div>
 
             <div class="mb-3">
@@ -129,7 +131,9 @@
                 <input type="email" class="form-control" th:field="*{email}"
                        th:classappend="${#fields.hasErrors('email')} ? 'is-invalid' : ''"
                        placeholder="you@example.com" autocomplete="email" required/>
-                <div class="invalid-feedback" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+                <div class="invalid-feedback" id="emailError"
+                     th:style="${#fields.hasErrors('email')} ? '' : 'display:none'"
+                     th:text="${#fields.hasErrors('email')} ? ${#fields.errors('email')[0]} : ''"></div>
             </div>
 
             <div class="mb-3">
@@ -137,12 +141,14 @@
                 <div class="input-wrapper">
                     <input type="password" class="form-control" th:field="*{password}" id="password"
                            th:classappend="${#fields.hasErrors('password')} ? 'is-invalid' : ''"
-                           placeholder="Min. 9 characters" autocomplete="new-password" required minlength="9"/>
+                           placeholder="Min. 8 characters" autocomplete="new-password" required minlength="8"/>
                     <span class="input-icon" id="togglePassword"><i class="fas fa-eye"></i></span>
                 </div>
                 <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
                 <div class="strength-text" id="strengthText" style="color:#9ca3af;">Enter a password</div>
-                <div class="invalid-feedback" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
+                <div class="invalid-feedback" id="passwordError"
+                     th:style="${#fields.hasErrors('password')} ? '' : 'display:none'"
+                     th:text="${#fields.hasErrors('password')} ? ${#fields.errors('password')[0]} : ''"></div>
             </div>
 
             <div class="mb-4">
@@ -182,7 +188,7 @@
     document.getElementById('password').addEventListener('input', function() {
         const v = this.value;
         let score = 0;
-        if (v.length >= 9) score++;
+        if (v.length >= 8) score++;
         if (/[A-Z]/.test(v)) score++;
         if (/[0-9]/.test(v)) score++;
         if (/[^A-Za-z0-9]/.test(v)) score++;
@@ -201,21 +207,92 @@
         text.style.color = cfg.color;
     });
 
-    // Confirm password validation
-    const confirmInput = document.getElementById('confirmPassword');
-    const confirmError = document.getElementById('confirmError');
+    // ── Field validation ────────────────────────────────────────────
+    const fields = {
+        fullName: document.getElementById('fullName'),
+        email:    document.getElementById('email'),
+        password: document.getElementById('password'),
+        confirm:  document.getElementById('confirmPassword')
+    };
+    const errors = {
+        fullName: document.getElementById('fullNameError'),
+        email:    document.getElementById('emailError'),
+        password: document.getElementById('passwordError'),
+        confirm:  document.getElementById('confirmError')
+    };
+
+    function showError(input, errorDiv, msg) {
+        input.classList.add('is-invalid');
+        input.classList.remove('is-valid');
+        errorDiv.textContent = msg;
+        errorDiv.style.display = 'block';
+    }
+    function clearError(input, errorDiv) {
+        input.classList.remove('is-invalid');
+        errorDiv.style.display = 'none';
+    }
+
+    // Errors disappear as soon as the user starts typing in that field
+    fields.fullName.addEventListener('input', () => clearError(fields.fullName, errors.fullName));
+    fields.email.addEventListener('input',    () => clearError(fields.email, errors.email));
+    fields.password.addEventListener('input', () => {
+        clearError(fields.password, errors.password);
+        // If confirm already has content, re-check the match live
+        if (fields.confirm.value !== '') checkConfirm();
+    });
+    fields.confirm.addEventListener('input', checkConfirm);
+
     function checkConfirm() {
-        const match = confirmInput.value === document.getElementById('password').value;
-        confirmInput.classList.toggle('is-invalid', !match && confirmInput.value !== '');
-        confirmInput.classList.toggle('is-valid', match && confirmInput.value !== '');
-        confirmError.style.display = (!match && confirmInput.value !== '') ? 'block' : 'none';
+        if (fields.confirm.value === '') {
+            clearError(fields.confirm, errors.confirm);
+            fields.confirm.classList.remove('is-valid');
+            return false;
+        }
+        const match = fields.confirm.value === fields.password.value;
+        if (match) {
+            clearError(fields.confirm, errors.confirm);
+            fields.confirm.classList.add('is-valid');
+        } else {
+            showError(fields.confirm, errors.confirm, 'Passwords do not match');
+        }
         return match;
     }
-    confirmInput.addEventListener('input', checkConfirm);
 
-    // Prevent submit if passwords don't match
+    // Validate everything on submit; block only if something is wrong
     document.getElementById('registerForm').addEventListener('submit', function(e) {
-        if (!checkConfirm()) e.preventDefault();
+        let ok = true;
+
+        if (fields.fullName.value.trim() === '') {
+            showError(fields.fullName, errors.fullName, 'Full name is required');
+            ok = false;
+        }
+
+        const emailVal = fields.email.value.trim();
+        if (emailVal === '') {
+            showError(fields.email, errors.email, 'Email is required');
+            ok = false;
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) {
+            showError(fields.email, errors.email, 'Please enter a valid email address');
+            ok = false;
+        }
+
+        if (fields.password.value === '') {
+            showError(fields.password, errors.password, 'Password is required');
+            ok = false;
+        } else if (fields.password.value.length < 8) {
+            showError(fields.password, errors.password, 'Password must be at least 8 characters');
+            ok = false;
+        }
+
+        if (fields.confirm.value === '') {
+            showError(fields.confirm, errors.confirm, 'Please confirm your password');
+            ok = false;
+        } else if (fields.confirm.value !== fields.password.value) {
+            showError(fields.confirm, errors.confirm, 'Passwords do not match');
+            ok = false;
+        }
+
+        if (!ok) e.preventDefault();
     });
 </script>
 </body>

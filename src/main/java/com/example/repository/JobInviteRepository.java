@@ -40,4 +40,8 @@ public interface JobInviteRepository extends JpaRepository<JobInvite, Long> {
             @Param("jobseekerId") Long jobseekerId,
             @Param("recruiter") Recruiter recruiter,
             @Param("status") InviteStatus status);
+
+    void deleteByJobseeker(Jobseeker jobseeker);
+
+    void deleteByJob(Job job);
 }

@@ -15,7 +15,7 @@ public class JobseekerRegistrationDto {
     private String email;
 
     @NotBlank(message = "Password is required")
-    @Size(min = 9, max = 100, message = "Password must be at least 9 characters")
+    @Size(min = 8, max = 100, message = "Password must be at least 8 characters")
     private String password;
 
     /** Optional — populated from ?ref= URL parameter when opening the registration page via a referral link. */

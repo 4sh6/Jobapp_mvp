@@ -149,8 +149,13 @@ public class RecruiterJobController extends RecruiterBaseController {
 
     @GetMapping("/jobs/{id}/applications")
     public String viewApplicants(@AuthenticationPrincipal UserDetails userDetails,
-                                 @PathVariable Long id, Model model) {
-        Recruiter recruiter = getRecruiter(userDetails);
+                                 @PathVariable Long id, Model model, RedirectAttributes ra) {
+        Recruiter recruiter;
+        try { recruiter = getActiveRecruiter(userDetails); }
+        catch (IllegalStateException e) {
+            ra.addFlashAttribute("error", e.getMessage());
+            return "redirect:/recruiter/dashboard";
+        }
         Job job = jobService.findById(id).orElseThrow();
         if (job.getRecruiter() == null || !job.getRecruiter().getId().equals(recruiter.getId())) {
             return "redirect:/recruiter/dashboard";
@@ -168,7 +173,12 @@ public class RecruiterJobController extends RecruiterBaseController {
                                @RequestParam ApplicationStatus status,
                                HttpServletRequest request,
                                RedirectAttributes ra) {
-        Recruiter recruiter = getRecruiter(userDetails);
+        Recruiter recruiter;
+        try { recruiter = getActiveRecruiter(userDetails); }
+        catch (IllegalStateException e) {
+            ra.addFlashAttribute("error", e.getMessage());
+            return "redirect:/recruiter/dashboard";
+        }
         Application app = applicationService.findById(id).orElseThrow();
 
         if (!app.getJob().getRecruiter().getId().equals(recruiter.getId())) {

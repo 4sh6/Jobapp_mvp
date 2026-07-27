@@ -47,7 +47,9 @@ public class RecruiterCandidateController extends RecruiterBaseController {
             return "redirect:/recruiter/dashboard";
         }
         String recruiterCompany = (recruiter.getCompany() != null) ? recruiter.getCompany().getName() : null;
-        Page<JobseekerProfile> candidatesPage = profileRepository.browseWithFilters(skills, expMin, expMax, recruiterCompany, pageable);
+        String[] terms = splitSkillTerms(skills);
+        Page<JobseekerProfile> candidatesPage = profileRepository.browseWithFilters(
+                terms[0], terms[1], terms[2], terms[3], expMin, expMax, recruiterCompany, pageable);
         List<Job> myJobs = jobService.listJobsByRecruiter(recruiter, org.springframework.data.domain.Pageable.unpaged())
                 .getContent().stream().filter(Job::isActive).toList();
         model.addAttribute("candidatesPage", candidatesPage);
@@ -80,8 +82,9 @@ public class RecruiterCandidateController extends RecruiterBaseController {
         int searchExpMax    = (expMax == 50 && skills.isBlank()) ? (job.getExperienceMax() != null ? job.getExperienceMax() : 50) : expMax;
 
         String recruiterCompany = (recruiter.getCompany() != null) ? recruiter.getCompany().getName() : null;
+        String[] terms = splitSkillTerms(searchSkills);
         Page<JobseekerProfile> candidatesPage = profileRepository.findMatchingCandidates(
-                searchSkills, searchExpMin, searchExpMax, recruiterCompany, pageable);
+                terms[0], terms[1], terms[2], terms[3], searchExpMin, searchExpMax, recruiterCompany, pageable);
 
         model.addAttribute("job", job);
         model.addAttribute("candidatesPage", candidatesPage);
@@ -166,6 +169,18 @@ public class RecruiterCandidateController extends RecruiterBaseController {
 
         ra.addFlashAttribute("success", "Interview invitation sent to " + js.getFullName() + "!");
         return "redirect:/recruiter/jobs/" + jobId + "/candidates";
+    }
+
+    /** Splits a comma-separated skills filter into up to 4 individual search terms (padded with ""). */
+    private static String[] splitSkillTerms(String skillsCsv) {
+        String[] slots = {"", "", "", ""};
+        if (skillsCsv == null || skillsCsv.isBlank()) return slots;
+        int i = 0;
+        for (String term : skillsCsv.split(",")) {
+            String t = term.trim();
+            if (!t.isEmpty() && i < slots.length) slots[i++] = t;
+        }
+        return slots;
     }
 
     @GetMapping("/invites")
