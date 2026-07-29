@@ -20,4 +20,9 @@ COPY --from=build /app/target/*.jar app.jar
 COPY docker/cockroachdb-root.crt /root/.postgresql/root.crt
 
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+
+# Render's free instance has 512MB total RAM. Without explicit limits, the
+# JVM's default ergonomics can over-allocate heap for this app's dependency
+# footprint (Spring, Hibernate, AWS SDK) and OOM before startup finishes.
+# Serial GC has lower memory overhead than G1 and is a good fit at this size.
+ENTRYPOINT ["java", "-Xmx320m", "-XX:MaxMetaspaceSize=160m", "-XX:+UseSerialGC", "-jar", "app.jar"]
