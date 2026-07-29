@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.security.Principal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -157,8 +158,14 @@ public class JobseekerDashboardController {
         dto.setFieldOfStudy(profile.getFieldOfStudy());
         dto.setGraduationYear(profile.getGraduationYear());
         dto.setPreferredLocations(profile.getPreferredLocations());
-        dto.setWorkMode(profile.getWorkMode());
+        if (profile.getWorkMode() != null && !profile.getWorkMode().isBlank()) {
+            dto.setWorkMode(Arrays.stream(profile.getWorkMode().split(","))
+                    .map(String::trim)
+                    .collect(Collectors.toList()));
+        }
         dto.setNoticePeriodDays(profile.getNoticePeriodDays());
+        dto.setServingNotice(profile.getServingNotice());
+        dto.setNoticeStartDate(profile.getNoticeStartDate());
 
         model.addAttribute("profileDto", dto);
         return "jobseeker/profile-edit";
@@ -208,7 +215,10 @@ public class JobseekerDashboardController {
                                      @RequestParam(required = false) String fieldOfStudy,
                                      @RequestParam(required = false) String graduationYear,
                                      @RequestParam(required = false) List<String> preferredLocations,
-                                     @RequestParam(required = false) String workMode,
+                                     @RequestParam(required = false) List<String> workMode,
+                                     @RequestParam(required = false) String noticePeriodDays,
+                                     @RequestParam(required = false) Boolean servingNotice,
+                                     @RequestParam(required = false) String noticeStartDate,
                                      RedirectAttributes ra) {
         if (principal == null) return "redirect:/jobseeker/login";
         Jobseeker jobseeker = jobseekerRepository.findByEmail(principal.getName()).orElseThrow();
@@ -242,7 +252,17 @@ public class JobseekerDashboardController {
         if (preferredLocations != null && !preferredLocations.isEmpty()) {
             profile.setPreferredLocations(String.join(", ", preferredLocations));
         }
-        if (workMode != null && !workMode.isBlank()) profile.setWorkMode(workMode.trim());
+        if (workMode != null && !workMode.isEmpty()) profile.setWorkMode(String.join(", ", workMode));
+        if (noticePeriodDays != null && !noticePeriodDays.isBlank()) {
+            try { profile.setNoticePeriodDays(Integer.parseInt(noticePeriodDays.trim())); } catch (NumberFormatException ignored) {}
+        }
+        profile.setServingNotice(servingNotice != null && servingNotice);
+        if (noticeStartDate != null && !noticeStartDate.isBlank()) {
+            try { profile.setNoticeStartDate(java.time.LocalDate.parse(noticeStartDate.trim())); }
+            catch (java.time.format.DateTimeParseException ignored) {}
+        } else {
+            profile.setNoticeStartDate(null);
+        }
 
         profileRepository.save(profile);
         ra.addFlashAttribute("success", "Profile updated successfully!");
@@ -417,10 +437,12 @@ public class JobseekerDashboardController {
     private boolean isPreferenceMatch(JobInvite invite, JobseekerProfile profile) {
         if (profile == null) return true; // no preferences set — treat as match
         var job = invite.getJob();
-        // Work mode match
-        if (profile.getWorkMode() != null && job.getWorkMode() != null
-                && !profile.getWorkMode().equalsIgnoreCase(job.getWorkMode())) {
-            return false;
+        // Work mode match — candidate may have selected multiple work modes (comma-separated)
+        if (profile.getWorkMode() != null && job.getWorkMode() != null) {
+            boolean matchesAny = Arrays.stream(profile.getWorkMode().split(","))
+                    .map(String::trim)
+                    .anyMatch(mode -> mode.equalsIgnoreCase(job.getWorkMode()));
+            if (!matchesAny) return false;
         }
         // Min CTC match: job's max salary should be at least candidate's expected CTC (in LPA)
         if (profile.getExpectedCtc() != null && job.getSalaryMax() != null

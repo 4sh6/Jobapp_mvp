@@ -152,8 +152,10 @@ public class JobseekerService {
 
         // Job Preferences
         profile.setPreferredLocations(dto.getPreferredLocations());
-        profile.setWorkMode(dto.getWorkMode());
+        profile.setWorkMode(dto.getWorkMode() != null ? String.join(", ", dto.getWorkMode()) : null);
         profile.setNoticePeriodDays(dto.getNoticePeriodDays());
+        profile.setServingNotice(dto.getServingNotice());
+        profile.setNoticeStartDate(dto.getNoticeStartDate());
 
         jobseeker.setProfileCompleted(true);
         jobseekerRepository.save(jobseeker);

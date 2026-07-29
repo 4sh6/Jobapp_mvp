@@ -72,7 +72,13 @@
           <div class="d-flex justify-content-between align-items-start gap-3">
             <div style="flex:1;min-width:0;">
 
-              <div class="person-name" th:text="${candidate.jobseeker.fullName}">Name</div>
+              <div class="person-name">
+                <span th:text="${candidate.jobseeker.fullName}">Name</span>
+                <span th:if="${candidate.immediateJoiner}"
+                      style="margin-left:.5rem; display:inline-block; padding:.15rem .55rem; border-radius:1rem; background:#dcfce7; color:#15803d; font-size:.68rem; font-weight:700; vertical-align:middle;">
+                  <i class="fas fa-bolt me-1"></i>Immediate Joiner
+                </span>
+              </div>
               <div class="person-headline"
                    th:text="${candidate.profileHeadline != null ? candidate.profileHeadline :
                              (candidate.currentRole != null ? candidate.currentRole : 'Candidate')}">
@@ -91,6 +97,11 @@
                 </span>
                 <span th:if="${candidate.preferredLocations != null}">
                   <i class="fas fa-map-marker-alt"></i><span th:text="${candidate.preferredLocations}">Loc</span>
+                </span>
+                <span th:if="${candidate.noticePeriodDays != null}">
+                  <i class="fas fa-hourglass-half"></i>
+                  <span th:if="${candidate.servingNotice}" th:text="${candidate.noticePeriodRemainingDays} + ' days remaining'">Notice</span>
+                  <span th:unless="${candidate.servingNotice}" th:text="${candidate.noticePeriodDays} + ' days notice'">Notice</span>
                 </span>
               </div>
 

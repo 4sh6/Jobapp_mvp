@@ -3,8 +3,12 @@ package com.example.dto;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
+import java.time.LocalDate;
+import java.util.List;
 
 public class JobseekerProfileDto {
 
@@ -52,10 +56,14 @@ public class JobseekerProfileDto {
     @NotBlank(message = "Preferred locations are required")
     private String preferredLocations;
 
-    @NotBlank(message = "Work mode is required")
-    private String workMode;
+    @NotEmpty(message = "Work mode is required")
+    private List<String> workMode;
 
     private Integer noticePeriodDays;
+
+    private Boolean servingNotice;
+
+    private LocalDate noticeStartDate;
 
     // ===== GETTERS & SETTERS =====
 
@@ -187,11 +195,11 @@ public class JobseekerProfileDto {
         this.preferredLocations = preferredLocations;
     }
 
-    public String getWorkMode() {
+    public List<String> getWorkMode() {
         return workMode;
     }
 
-    public void setWorkMode(String workMode) {
+    public void setWorkMode(List<String> workMode) {
         this.workMode = workMode;
     }
 
@@ -201,6 +209,22 @@ public class JobseekerProfileDto {
 
     public void setNoticePeriodDays(Integer noticePeriodDays) {
         this.noticePeriodDays = noticePeriodDays;
+    }
+
+    public Boolean getServingNotice() {
+        return servingNotice;
+    }
+
+    public void setServingNotice(Boolean servingNotice) {
+        this.servingNotice = servingNotice;
+    }
+
+    public LocalDate getNoticeStartDate() {
+        return noticeStartDate;
+    }
+
+    public void setNoticeStartDate(LocalDate noticeStartDate) {
+        this.noticeStartDate = noticeStartDate;
     }
 
 }

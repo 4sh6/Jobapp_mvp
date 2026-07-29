@@ -176,20 +176,38 @@
                     <div class="invalid-feedback" th:if="${#fields.hasErrors('preferredLocations')}" th:errors="*{preferredLocations}"></div>
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label">Work Mode *</label>
-                    <select class="form-select" th:field="*{workMode}" required
-                            th:classappend="${#fields.hasErrors('workMode')} ? 'is-invalid' : ''">
-                        <option value="">Select mode</option>
-                        <option value="ONSITE">On-site</option>
-                        <option value="REMOTE">Remote</option>
-                        <option value="HYBRID">Hybrid</option>
-                    </select>
-                    <div class="invalid-feedback" th:if="${#fields.hasErrors('workMode')}" th:errors="*{workMode}"></div>
+                    <label class="form-label">Work Mode * <small class="text-muted">(select all that apply)</small></label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" th:field="*{workMode}" value="ONSITE"/>
+                        <label class="form-check-label" th:for="${#ids.prev('workMode')}">On-site</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" th:field="*{workMode}" value="REMOTE"/>
+                        <label class="form-check-label" th:for="${#ids.prev('workMode')}">Remote</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" th:field="*{workMode}" value="HYBRID"/>
+                        <label class="form-check-label" th:for="${#ids.prev('workMode')}">Hybrid</label>
+                    </div>
+                    <div class="invalid-feedback d-block" th:if="${#fields.hasErrors('workMode')}" th:errors="*{workMode}"></div>
                 </div>
             </div>
             <div class="mb-3">
                 <label class="form-label">Notice Period (days)</label>
                 <input type="number" class="form-control" th:field="*{noticePeriodDays}" placeholder="30" min="0" style="max-width:200px;"/>
+            </div>
+            <div class="mb-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" th:field="*{servingNotice}" id="servingNoticeEdit"
+                           onchange="document.getElementById('noticeStartWrapEdit').style.display = this.checked ? 'block' : 'none';"/>
+                    <label class="form-check-label" for="servingNoticeEdit">I'm currently serving my notice period</label>
+                </div>
+                <div class="mt-2" id="noticeStartWrapEdit"
+                     th:style="${profileDto.servingNotice} ? 'display:block' : 'display:none'">
+                    <label class="form-label">Notice start date</label>
+                    <input type="date" class="form-control" th:field="*{noticeStartDate}" style="max-width:220px;"/>
+                    <div class="help-text">Used to calculate your remaining notice days.</div>
+                </div>
             </div>
         </div>
 

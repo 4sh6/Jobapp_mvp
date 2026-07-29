@@ -21,6 +21,14 @@
         }
         .sidebar.collapsed { width: 60px; }
         .sidebar-brand { display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.08); min-height: 64px; flex-shrink: 0; }
+        .brand-group { display: flex; align-items: center; gap: 0.6rem; overflow: hidden; }
+        .brand-icon {
+            width: 32px; height: 32px; flex-shrink: 0;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            border-radius: 0.5rem;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 900; font-size: 0.9rem; color: #fff;
+        }
         .brand-text { overflow: hidden; white-space: nowrap; transition: opacity 0.2s; }
         .brand-text span { font-size: 1.1rem; font-weight: 800; color: #fff; display: block; }
         .brand-text small { font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.1em; }
@@ -98,7 +106,10 @@
 
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-brand">
-        <div class="brand-text"><span>KoderHyre</span><small>Admin Portal</small></div>
+        <div class="brand-group">
+            <div class="brand-icon">K</div>
+            <div class="brand-text"><span>KoderHyre</span><small>Admin Portal</small></div>
+        </div>
         <button class="sidebar-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
     </div>
     <nav class="sidebar-nav">

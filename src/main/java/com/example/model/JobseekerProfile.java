@@ -2,6 +2,9 @@ package com.example.model;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+
 @Entity
 @Table(name = "jobseeker_profiles")
 public class JobseekerProfile {
@@ -66,6 +69,12 @@ public class JobseekerProfile {
 
     @Column(name = "notice_period_days")
     private Integer noticePeriodDays;
+
+    @Column(name = "serving_notice")
+    private Boolean servingNotice;
+
+    @Column(name = "notice_start_date")
+    private LocalDate noticeStartDate;
 
 
     // Getters and Setters
@@ -174,5 +183,36 @@ public class JobseekerProfile {
 
     public Integer getNoticePeriodDays() { return noticePeriodDays; }
     public void setNoticePeriodDays(Integer noticePeriodDays) { this.noticePeriodDays = noticePeriodDays; }
+
+    public Boolean getServingNotice() { return servingNotice; }
+    public void setServingNotice(Boolean servingNotice) { this.servingNotice = servingNotice; }
+
+    public LocalDate getNoticeStartDate() { return noticeStartDate; }
+    public void setNoticeStartDate(LocalDate noticeStartDate) { this.noticeStartDate = noticeStartDate; }
+
+    /** Days left in notice, if currently serving. Null when not serving or start date/notice length is unknown. */
+    @Transient
+    public Integer getNoticePeriodRemainingDays() {
+        if (!Boolean.TRUE.equals(servingNotice) || noticeStartDate == null || noticePeriodDays == null) {
+            return null;
+        }
+        long elapsed = ChronoUnit.DAYS.between(noticeStartDate, LocalDate.now());
+        long remaining = noticePeriodDays - elapsed;
+        return (int) Math.max(0, remaining);
+    }
+
+    /** Effective notice length right now: remaining days if serving, otherwise the full notice period. */
+    @Transient
+    public Integer getEffectiveNoticeDays() {
+        Integer remaining = getNoticePeriodRemainingDays();
+        return remaining != null ? remaining : noticePeriodDays;
+    }
+
+    /** A candidate is an Immediate Joiner when their effective notice is 30 days or less. */
+    @Transient
+    public boolean isImmediateJoiner() {
+        Integer effective = getEffectiveNoticeDays();
+        return effective != null && effective <= 30;
+    }
 
 }

@@ -53,7 +53,13 @@
             <div class="d-flex align-items-start gap-3">
               <div class="avatar" th:text="${#strings.substring(candidate.fullName, 0, 1)}">A</div>
               <div>
-                <h4 class="mb-1 fw-bold" th:text="${candidate.fullName}">Name</h4>
+                <h4 class="mb-1 fw-bold">
+                  <span th:text="${candidate.fullName}">Name</span>
+                  <span th:if="${profile != null and profile.immediateJoiner}"
+                        style="margin-left:.6rem; display:inline-block; padding:.2rem .6rem; border-radius:1rem; background:#dcfce7; color:#15803d; font-size:.7rem; font-weight:700; vertical-align:middle;">
+                    <i class="fas fa-bolt me-1"></i>Immediate Joiner
+                  </span>
+                </h4>
                 <div th:if="${profile != null and profile.profileHeadline != null}"
                      style="opacity:0.9;margin-bottom:0.5rem;" th:text="${profile.profileHeadline}">Headline</div>
                 <div class="d-flex gap-3 flex-wrap" style="font-size:0.85rem;opacity:0.8;">
@@ -102,8 +108,11 @@
                 <div class="info-value" th:text="${profile.workMode}"></div>
               </div>
               <div class="col-sm-4" th:if="${profile.noticePeriodDays != null}">
-                <div class="info-label">Notice Period</div>
-                <div class="info-value"><span th:text="${profile.noticePeriodDays}"></span> days</div>
+                <div class="info-label">Notice Period (days)</div>
+                <div class="info-value">
+                  <span th:if="${profile.servingNotice}" th:text="${profile.noticePeriodRemainingDays} + ' days remaining (serving)'"></span>
+                  <span th:unless="${profile.servingNotice}" th:text="${profile.noticePeriodDays} + ' days'"></span>
+                </div>
               </div>
             </div>
           </div>

@@ -7,7 +7,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
     <style>
         body { background-color: #f5f6fa; font-family: 'Segoe UI', sans-serif; }
-        .navbar-brand { font-weight: 700; }
+        .navbar-brand { font-weight: 700; color: #6366f1 !important; }
         .profile-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white; border-radius: 1rem 1rem 0 0; padding: 2rem;
@@ -128,8 +128,13 @@
                     <p class="mb-1"><strong>Expected CTC:</strong>
                         <span th:text="${profile.expectedCtc != null ? '₹' + profile.expectedCtc + ' LPA' : 'N/A'}">—</span>
                     </p>
-                    <p class="mb-1"><strong>Notice Period:</strong>
-                        <span th:text="${profile.noticePeriodDays != null ? profile.noticePeriodDays + ' days' : 'N/A'}">—</span>
+                    <p class="mb-1"><strong>Notice Period (days):</strong>
+                        <span th:if="${profile.noticePeriodDays != null && profile.servingNotice}"
+                              th:text="${profile.noticePeriodRemainingDays} + ' days remaining (serving notice)'">—</span>
+                        <span th:if="${profile.noticePeriodDays != null && !profile.servingNotice}"
+                              th:text="${profile.noticePeriodDays} + ' days'">—</span>
+                        <span th:unless="${profile.noticePeriodDays != null}">N/A</span>
+                        <span th:if="${profile.immediateJoiner}" class="badge" style="background:#dcfce7; color:#15803d; margin-left:.4rem;">Immediate Joiner</span>
                     </p>
                 </div>
             </div>

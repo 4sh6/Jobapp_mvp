@@ -69,8 +69,14 @@
                     <div class="value" th:unless="${profile != null}">—</div>
                 </div>
                 <div class="info-item">
-                    <div class="label">Notice Period</div>
-                    <div class="value" th:text="${profile != null && profile.noticePeriodDays != null ? profile.noticePeriodDays + ' days' : 'Immediate'}">30 days</div>
+                    <div class="label">Notice Period (days)</div>
+                    <div class="value" th:if="${profile != null && profile.noticePeriodDays != null}">
+                        <span th:if="${profile.servingNotice}"
+                              th:text="${profile.noticePeriodRemainingDays} + ' days remaining (serving notice)'">15 days remaining</span>
+                        <span th:unless="${profile.servingNotice}" th:text="${profile.noticePeriodDays} + ' days'">30 days</span>
+                        <span th:if="${profile.immediateJoiner}" style="margin-left:.5rem; display:inline-block; padding:.15rem .5rem; border-radius:1rem; background:#dcfce7; color:#15803d; font-size:.72rem; font-weight:700;">Immediate Joiner</span>
+                    </div>
+                    <div class="value" th:unless="${profile != null && profile.noticePeriodDays != null}">Immediate</div>
                 </div>
                 <div class="info-item">
                     <div class="label">Current CTC</div>
