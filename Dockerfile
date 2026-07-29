@@ -15,5 +15,9 @@ WORKDIR /app
 
 COPY --from=build /app/target/*.jar app.jar
 
+# CockroachDB Cloud requires sslmode=verify-full, which needs this CA root cert
+# (public, non-secret — ISRG Root X1) present on the filesystem at runtime.
+COPY docker/cockroachdb-root.crt /root/.postgresql/root.crt
+
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
