@@ -6,32 +6,87 @@
     <title>Create Account - KoderHyre</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet"/>
     <style>
+        * { box-sizing: border-box; }
         body {
-            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-            min-height: 100vh; display: flex; align-items: center; padding: 2rem 1rem;
+            background: #0b0f1a;
+            min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            padding: 2rem 1rem;
             font-family: 'Inter', 'Segoe UI', sans-serif;
         }
-        .auth-card {
-            background: #fff; border-radius: 1.25rem;
-            box-shadow: 0 20px 60px rgba(0,0,0,.2);
-            width: 100%; max-width: 480px; margin: auto;
+
+        .auth-shell {
+            width: 100%; max-width: 940px; margin: auto;
+            background: #fff; border-radius: 1rem;
+            box-shadow: 0 30px 80px rgba(0,0,0,.45);
             overflow: hidden;
         }
-        .auth-header {
-            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-            padding: 2rem; text-align: center; color: #fff;
+
+        /* Window chrome — makes the whole card read as "a dev tool", not a generic SaaS form */
+        .window-bar {
+            background: #12172b; padding: .65rem 1rem; display: flex; align-items: center; gap: .5rem;
         }
-        .auth-header h1 { font-size: 1.8rem; font-weight: 800; margin-bottom: .25rem; }
-        .auth-header p  { font-size: .9rem; opacity: .85; margin: 0; }
-        .auth-body { padding: 2rem; }
-        .form-label { font-weight: 600; font-size: .85rem; color: #374151; margin-bottom: .4rem; }
+        .win-dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+        .win-dot.red { background: #ef4444; }
+        .win-dot.yellow { background: #f59e0b; }
+        .win-dot.green { background: #22c55e; }
+        .window-title {
+            margin-left: .75rem; font-family: 'JetBrains Mono', monospace; font-size: .75rem;
+            color: #64748b;
+        }
+
+        .auth-shell-body { display: flex; min-height: 560px; }
+
+        /* ── Left brand / terminal panel ───────────────────────────── */
+        .brand-panel {
+            flex: 0 0 42%; background: linear-gradient(160deg, #0f172a 0%, #1e1b4b 100%);
+            color: #e2e8f0; padding: 2.5rem 2rem; display: flex; flex-direction: column;
+        }
+        .brand-logo {
+            font-family: 'JetBrains Mono', monospace; font-size: 1.3rem; font-weight: 700;
+            margin-bottom: 2rem;
+        }
+        .brand-logo a { color: #fff; text-decoration: none; }
+        .brand-logo .accent { color: #818cf8; }
+
+        .terminal-block {
+            background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08);
+            border-radius: .6rem; padding: 1.1rem 1.2rem; font-family: 'JetBrains Mono', monospace;
+            font-size: .8rem; line-height: 1.7; flex-grow: 1;
+        }
+        .term-line { color: #94a3b8; }
+        .term-line .prompt { color: #818cf8; font-weight: 700; margin-right: .4rem; }
+        .term-out { color: #6ee7b7; margin-bottom: .9rem; }
+        .cursor { display: inline-block; width: 7px; background: #6ee7b7; margin-left: 2px; animation: blink 1s step-start infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        .brand-tag {
+            font-size: .85rem; color: #94a3b8; margin: 1.5rem 0 0; font-style: italic;
+        }
+        .brand-stats {
+            display: flex; gap: 1.5rem; margin-top: 1.5rem; font-family: 'JetBrains Mono', monospace;
+        }
+        .brand-stats div { font-size: 1.1rem; font-weight: 700; color: #fff; }
+        .brand-stats span { display: block; font-size: .68rem; color: #64748b; font-weight: 400; margin-top: .15rem; }
+
+        /* ── Right form panel ──────────────────────────────────────── */
+        .form-panel { flex: 1; padding: 2.5rem 2.25rem; }
+        .form-panel h3 {
+            font-size: 1.25rem; font-weight: 800; margin-bottom: .2rem; color: #0f172a;
+        }
+        .form-panel .form-sub { font-size: .85rem; color: #64748b; margin-bottom: 1.5rem; }
+
+        .form-label {
+            font-weight: 700; font-size: .78rem; color: #374151; margin-bottom: .4rem;
+            text-transform: uppercase; letter-spacing: .03em;
+        }
         .form-control {
-            border: 1.5px solid #e5e7eb; border-radius: .6rem; padding: .7rem 1rem;
+            border: 1.5px solid #e5e7eb; border-radius: .5rem; padding: .7rem 1rem;
             font-size: .95rem; transition: border-color .2s, box-shadow .2s;
         }
         .form-control:focus {
-            border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.15); outline: none;
+            border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79,70,229,.15); outline: none;
         }
         .form-control.is-invalid { border-color: #ef4444; }
         .form-control.is-valid   { border-color: #22c55e; }
@@ -41,7 +96,7 @@
             position: absolute; right: .9rem; top: 50%; transform: translateY(-50%);
             color: #9ca3af; cursor: pointer; font-size: .95rem;
         }
-        .input-icon.active { color: #6366f1; }
+        .input-icon.active { color: #4f46e5; }
 
         /* Password strength */
         .strength-bar { height: 4px; border-radius: 2px; background: #f3f4f6; margin-top: .5rem; overflow: hidden; }
@@ -49,124 +104,145 @@
         .strength-text { font-size: .75rem; margin-top: .25rem; font-weight: 600; }
 
         .btn-primary-custom {
-            width: 100%; padding: .8rem; border: none; border-radius: .7rem;
-            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-            color: #fff; font-size: 1rem; font-weight: 700; cursor: pointer;
-            transition: opacity .2s, transform .1s;
+            width: 100%; padding: .8rem; border: none; border-radius: .5rem;
+            background: #0f172a; color: #fff; font-size: .95rem; font-weight: 700; cursor: pointer;
+            font-family: 'JetBrains Mono', monospace;
+            transition: background .2s, transform .1s;
+            display: flex; align-items: center; justify-content: center; gap: .5rem;
         }
-        .btn-primary-custom:hover { opacity: .92; transform: translateY(-1px); }
+        .btn-primary-custom:hover { background: #1e293b; transform: translateY(-1px); }
         .btn-primary-custom:active { transform: translateY(0); }
+        .btn-primary-custom .prompt-arrow { color: #6ee7b7; }
 
-        .divider { text-align: center; color: #9ca3af; margin: 1.25rem 0; position: relative; }
-        .divider::before, .divider::after {
-            content: ''; position: absolute; top: 50%; width: 44%; height: 1px; background: #e5e7eb;
-        }
-        .divider::before { left: 0; }
-        .divider::after  { right: 0; }
-
-        .btn-google {
-            width: 100%; padding: .7rem; border: 1.5px solid #e5e7eb; border-radius: .7rem;
-            background: #fff; color: #374151; font-weight: 600; font-size: .9rem;
-            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: .6rem;
-            transition: background .2s;
-        }
-        .btn-google:hover { background: #f9fafb; }
-
-        .auth-footer { text-align: center; padding: 1.25rem; background: #f9fafb; font-size: .9rem; color: #6b7280; }
-        .auth-footer a { color: #6366f1; font-weight: 600; text-decoration: none; }
+        .auth-footer { text-align: center; margin-top: 1.5rem; font-size: .87rem; color: #6b7280; }
+        .auth-footer a { color: #4f46e5; font-weight: 700; text-decoration: none; }
         .auth-footer a:hover { text-decoration: underline; }
+
+        @media (max-width: 800px) {
+            .auth-shell-body { flex-direction: column; }
+            .brand-panel { flex: none; padding: 1.75rem 1.5rem; }
+            .terminal-block { display: none; }
+            .brand-tag { display: none; }
+            .brand-stats { margin-top: .5rem; }
+            .form-panel { padding: 1.75rem 1.5rem; }
+        }
     </style>
 </head>
 <body>
-<div class="auth-card">
-    <div class="auth-header">
-        <h1><a href="/" style="text-decoration:none; color:inherit;">KoderHyre</a></h1>
-        <p>India's top koders platform</p>
+<div class="auth-shell">
+    <div class="window-bar">
+        <span class="win-dot red"></span><span class="win-dot yellow"></span><span class="win-dot green"></span>
+        <span class="window-title">~/koderhyre/signup</span>
     </div>
+    <div class="auth-shell-body">
 
-    <div class="auth-body">
-        <h3 style="font-size:1.2rem; font-weight:700; margin-bottom:1.25rem; color:#1e293b;">Create your account</h3>
-
-        <div th:if="${error}" class="alert alert-danger d-flex align-items-center gap-2 py-2" style="border-radius:.6rem; font-size:.85rem;">
-            <i class="fas fa-exclamation-circle"></i> <span th:text="${error}"></span>
-        </div>
-
-        <div th:if="${emailExists}"
-             style="background:#eff6ff; border:1.5px solid #93c5fd; border-radius:.75rem; padding:1rem 1.25rem; margin-bottom:1rem; display:flex; align-items:flex-start; gap:.75rem;">
-            <i class="fas fa-envelope-open-text" style="color:#2563eb; font-size:1.1rem; margin-top:.1rem; flex-shrink:0;"></i>
-            <div>
-                <div style="font-weight:700; color:#1e40af; margin-bottom:.2rem;">Email already registered</div>
-                <div style="color:#1d4ed8; font-size:.875rem;">
-                    An account with this email already exists.
-                    <a href="/jobseeker/login" style="color:#1d4ed8; font-weight:700; text-decoration:underline;">Sign in to continue →</a>
+        <div class="brand-panel">
+            <div class="brand-logo"><a href="/">Koder<span class="accent">Hyre</span></a></div>
+            <div class="terminal-block">
+                <div class="term-line"><span class="prompt">$</span>whoami</div>
+                <div class="term-out">a developer tired of cover letters</div>
+                <div class="term-line"><span class="prompt">$</span>koderhyre --init</div>
+                <div class="term-out">
+                    &gt; building your profile once<br/>
+                    &gt; matching with 500+ hiring companies<br/>
+                    &gt; no gatekeeping, no essays<span class="cursor">&nbsp;</span>
                 </div>
             </div>
-        </div>
-
-        <!-- Referral notice -->
-        <div th:if="${referredByCode != null}"
-             style="background:#f0fdf4; border:1.5px solid #86efac; border-radius:.75rem; padding:.85rem 1.1rem; margin-bottom:1rem; display:flex; align-items:center; gap:.75rem;">
-            <i class="fas fa-user-friends" style="color:#16a34a; font-size:1rem; flex-shrink:0;"></i>
-            <div style="font-size:.875rem; color:#15803d;">
-                You were invited by a friend! Sign up to join KoderHyre's curated talent network.
+            <p class="brand-tag">Built by developers, for developers.</p>
+            <div class="brand-stats">
+                <div>500+<span>Companies</span></div>
+                <div>10x<span>Faster hiring</span></div>
             </div>
         </div>
 
-        <form th:action="@{/jobseeker/register}" method="post" th:object="${jobseekerRegistrationDto}" id="registerForm" novalidate>
-            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-            <input type="hidden" th:field="*{referredByCode}"/>
+        <div class="form-panel">
+            <h3>Create your account</h3>
+            <p class="form-sub">Ship your profile once. Let offers come to you.</p>
 
-            <div class="mb-3">
-                <label class="form-label">Full Name</label>
-                <input type="text" class="form-control" th:field="*{fullName}"
-                       th:classappend="${#fields.hasErrors('fullName')} ? 'is-invalid' : ''"
-                       placeholder="Enter your name" autocomplete="name" required/>
-                <div class="invalid-feedback" id="fullNameError"
-                     th:style="${#fields.hasErrors('fullName')} ? '' : 'display:none'"
-                     th:text="${#fields.hasErrors('fullName')} ? ${#fields.errors('fullName')[0]} : ''"></div>
+            <div th:if="${error}" class="alert alert-danger d-flex align-items-center gap-2 py-2" style="border-radius:.5rem; font-size:.85rem;">
+                <i class="fas fa-exclamation-circle"></i> <span th:text="${error}"></span>
             </div>
 
-            <div class="mb-3">
-                <label class="form-label">Email Address</label>
-                <input type="email" class="form-control" th:field="*{email}"
-                       th:classappend="${#fields.hasErrors('email')} ? 'is-invalid' : ''"
-                       placeholder="you@example.com" autocomplete="email" required/>
-                <div class="invalid-feedback" id="emailError"
-                     th:style="${#fields.hasErrors('email')} ? '' : 'display:none'"
-                     th:text="${#fields.hasErrors('email')} ? ${#fields.errors('email')[0]} : ''"></div>
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">Password</label>
-                <div class="input-wrapper">
-                    <input type="password" class="form-control" th:field="*{password}" id="password"
-                           th:classappend="${#fields.hasErrors('password')} ? 'is-invalid' : ''"
-                           placeholder="Min. 8 characters" autocomplete="new-password" required minlength="8"/>
-                    <span class="input-icon" id="togglePassword"><i class="fas fa-eye"></i></span>
+            <div th:if="${emailExists}"
+                 style="background:#eff6ff; border:1.5px solid #93c5fd; border-radius:.6rem; padding:1rem 1.25rem; margin-bottom:1rem; display:flex; align-items:flex-start; gap:.75rem;">
+                <i class="fas fa-envelope-open-text" style="color:#2563eb; font-size:1.1rem; margin-top:.1rem; flex-shrink:0;"></i>
+                <div>
+                    <div style="font-weight:700; color:#1e40af; margin-bottom:.2rem;">Email already registered</div>
+                    <div style="color:#1d4ed8; font-size:.875rem;">
+                        An account with this email already exists.
+                        <a href="/jobseeker/login" style="color:#1d4ed8; font-weight:700; text-decoration:underline;">Sign in to continue &rarr;</a>
+                    </div>
                 </div>
-                <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
-                <div class="strength-text" id="strengthText" style="color:#9ca3af;">Enter a password</div>
-                <div class="invalid-feedback" id="passwordError"
-                     th:style="${#fields.hasErrors('password')} ? '' : 'display:none'"
-                     th:text="${#fields.hasErrors('password')} ? ${#fields.errors('password')[0]} : ''"></div>
             </div>
 
-            <div class="mb-4">
-                <label class="form-label">Confirm Password</label>
-                <div class="input-wrapper">
-                    <input type="password" class="form-control" id="confirmPassword"
-                           placeholder="Re-enter your password" autocomplete="new-password" required/>
-                    <span class="input-icon" id="toggleConfirm"><i class="fas fa-eye"></i></span>
+            <!-- Referral notice -->
+            <div th:if="${referredByCode != null}"
+                 style="background:#f0fdf4; border:1.5px solid #86efac; border-radius:.6rem; padding:.85rem 1.1rem; margin-bottom:1rem; display:flex; align-items:center; gap:.75rem;">
+                <i class="fas fa-user-friends" style="color:#16a34a; font-size:1rem; flex-shrink:0;"></i>
+                <div style="font-size:.875rem; color:#15803d;">
+                    You were invited by a friend! Sign up to join KoderHyre's curated talent network.
                 </div>
-                <div id="confirmError" class="invalid-feedback" style="display:none;">Passwords do not match</div>
             </div>
 
-            <button type="submit" class="btn-primary-custom" id="submitBtn">Create Account</button>
-        </form>
-    </div>
+            <form th:action="@{/jobseeker/register}" method="post" th:object="${jobseekerRegistrationDto}" id="registerForm" novalidate>
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <input type="hidden" th:field="*{referredByCode}"/>
 
-    <div class="auth-footer">
-        Already have an account? <a href="/jobseeker/login">Sign in</a>
+                <div class="mb-3">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" class="form-control" th:field="*{fullName}"
+                           th:classappend="${#fields.hasErrors('fullName')} ? 'is-invalid' : ''"
+                           placeholder="Enter your name" autocomplete="name" required/>
+                    <div class="invalid-feedback" id="fullNameError"
+                         th:style="${#fields.hasErrors('fullName')} ? '' : 'display:none'"
+                         th:text="${#fields.hasErrors('fullName')} ? ${#fields.errors('fullName')[0]} : ''"></div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" class="form-control" th:field="*{email}"
+                           th:classappend="${#fields.hasErrors('email')} ? 'is-invalid' : ''"
+                           placeholder="you@example.com" autocomplete="email" required/>
+                    <div class="invalid-feedback" id="emailError"
+                         th:style="${#fields.hasErrors('email')} ? '' : 'display:none'"
+                         th:text="${#fields.hasErrors('email')} ? ${#fields.errors('email')[0]} : ''"></div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Password</label>
+                    <div class="input-wrapper">
+                        <input type="password" class="form-control" th:field="*{password}" id="password"
+                               th:classappend="${#fields.hasErrors('password')} ? 'is-invalid' : ''"
+                               placeholder="Min. 8 characters" autocomplete="new-password" required minlength="8"/>
+                        <span class="input-icon" id="togglePassword"><i class="fas fa-eye"></i></span>
+                    </div>
+                    <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
+                    <div class="strength-text" id="strengthText" style="color:#9ca3af;">Enter a password</div>
+                    <div class="invalid-feedback" id="passwordError"
+                         th:style="${#fields.hasErrors('password')} ? '' : 'display:none'"
+                         th:text="${#fields.hasErrors('password')} ? ${#fields.errors('password')[0]} : ''"></div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">Confirm Password</label>
+                    <div class="input-wrapper">
+                        <input type="password" class="form-control" id="confirmPassword"
+                               placeholder="Re-enter your password" autocomplete="new-password" required/>
+                        <span class="input-icon" id="toggleConfirm"><i class="fas fa-eye"></i></span>
+                    </div>
+                    <div id="confirmError" class="invalid-feedback" style="display:none;">Passwords do not match</div>
+                </div>
+
+                <button type="submit" class="btn-primary-custom" id="submitBtn">
+                    <span class="prompt-arrow">&gt;</span> Create Account
+                </button>
+            </form>
+
+            <div class="auth-footer">
+                Already have an account? <a href="/jobseeker/login">Sign in</a>
+            </div>
+        </div>
+
     </div>
 </div>
 
