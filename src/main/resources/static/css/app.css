@@ -42,6 +42,7 @@ body {
 .sidebar-logo-text h2 {
     font-size: 1rem; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -.3px;
 }
+.sidebar-logo-text h2 .accent { color: #6366f1; }
 .sidebar-logo-text .user-name {
     font-size: .75rem; color: #64748b; font-weight: 500; margin-top: .05rem;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;
