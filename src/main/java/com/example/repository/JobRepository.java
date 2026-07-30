@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
+
 public interface JobRepository extends JpaRepository<Job, Long> {
 
     Page<Job> findByActiveTrueAndStatus(String status, Pageable pageable);
@@ -49,4 +51,8 @@ public interface JobRepository extends JpaRepository<Job, Long> {
     @Query(value = "SELECT j FROM Job j LEFT JOIN FETCH j.recruiter r LEFT JOIN FETCH r.company",
            countQuery = "SELECT COUNT(j) FROM Job j")
     Page<Job> findAllWithRecruiter(Pageable pageable);
+
+    /** All publicly-visible jobs, for the sitemap — unpaged since sitemaps need every URL. */
+    @Query("SELECT j FROM Job j WHERE j.active = true AND j.status = 'PUBLISHED' ORDER BY j.postedDate DESC")
+    List<Job> findAllPublishedForSitemap();
 }

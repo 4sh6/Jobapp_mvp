@@ -1,0 +1,34 @@
+User-agent: *
+Allow: /
+Allow: /jobs
+Allow: /jobs/
+
+Disallow: /jobseeker/dashboard
+Disallow: /jobseeker/profile
+Disallow: /jobseeker/profile-details
+Disallow: /jobseeker/account
+Disallow: /jobseeker/onboarding
+Disallow: /jobseeker/resume-onboarding
+Disallow: /jobseeker/resume
+Disallow: /jobseeker/interview-requests
+Disallow: /jobseeker/active-interviews
+Disallow: /jobseeker/refer-and-earn
+Disallow: /jobseeker/ats-checker
+Disallow: /jobseeker/verify-otp
+Disallow: /jobseeker/resend-otp
+Disallow: /jobseeker/reset-password
+Disallow: /jobseeker/forgot-password
+
+Disallow: /recruiter/dashboard
+Disallow: /recruiter/candidates
+Disallow: /recruiter/candidate/
+Disallow: /recruiter/invites
+Disallow: /recruiter/company
+Disallow: /recruiter/jobs/
+Disallow: /recruiter/resume/
+
+Disallow: /admin/
+Disallow: /api/
+Disallow: /h2-console/
+
+Sitemap: https://koderhyre.com/sitemap.xml
