@@ -73,7 +73,10 @@ public class JobseekerAuthController {
     }
 
     @GetMapping("/verify-otp")
-    public String showVerifyOtp(@RequestParam("email") String email, Model model) {
+    public String showVerifyOtp(@RequestParam(required = false) String email, Model model) {
+        if (email == null || email.isBlank()) {
+            return "redirect:/jobseeker/register";
+        }
         model.addAttribute("email", email);
         return "jobseeker/verify-otp";
     }
@@ -180,7 +183,10 @@ public class JobseekerAuthController {
     }
 
     @PostMapping("/resend-otp")
-    public String resendOtp(@RequestParam String email, Model model) {
+    public String resendOtp(@RequestParam(required = false) String email, Model model) {
+        if (email == null || email.isBlank()) {
+            return "redirect:/jobseeker/register";
+        }
         jobseekerRepository.findByEmail(email.trim().toLowerCase()).ifPresent(js -> {
             if (!js.isEmailVerified()) {
                 otpService.resendOtp(email.trim().toLowerCase());
