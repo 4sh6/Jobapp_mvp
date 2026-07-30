@@ -6,6 +6,7 @@ import com.example.repository.EmailOtpRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
@@ -23,6 +24,7 @@ public class OtpService {
     // SECURITY: use SecureRandom instead of Random for cryptographic OTP generation
     private final SecureRandom random = new SecureRandom();
 
+    @Transactional
     public void generateAndSendOtp(String email) {
         String code = String.format("%06d", random.nextInt(1_000_000));
         LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(10);
@@ -33,6 +35,7 @@ public class OtpService {
         emailService.sendOtp(email, code);
     }
 
+    @Transactional
     public boolean verifyOtp(String email, String code) {
         Optional<EmailOtp> latest = otpRepository.findTopByEmailOrderByCreatedAtDesc(email);
         if (latest.isEmpty()) {
@@ -50,6 +53,7 @@ public class OtpService {
         return true;
     }
 
+    @Transactional
     public void resendOtp(String email) {
         // Delete all previous OTPs for this email then generate a fresh one
         otpRepository.deleteByEmail(email);
