@@ -125,18 +125,22 @@ public class AdminController {
     }
 
     @PostMapping("/recruiters/{id}/approve")
-    public String approveRecruiter(@PathVariable Long id) {
+    public String approveRecruiter(@PathVariable Long id, RedirectAttributes ra) {
         Recruiter recruiter = recruiterRepository.findById(id).orElseThrow();
         recruiter.setActivationStatus(ActivationStatus.ACTIVE);
         recruiterRepository.save(recruiter);
+        emailService.sendRecruiterApproved(recruiter.getEmail(), recruiter.getName());
+        ra.addFlashAttribute("success", recruiter.getName() + " approved and notified.");
         return "redirect:/admin/recruiters";
     }
 
     @PostMapping("/recruiters/{id}/reject")
-    public String rejectRecruiter(@PathVariable Long id) {
+    public String rejectRecruiter(@PathVariable Long id, RedirectAttributes ra) {
         Recruiter recruiter = recruiterRepository.findById(id).orElseThrow();
         recruiter.setActivationStatus(ActivationStatus.REJECTED);
         recruiterRepository.save(recruiter);
+        emailService.sendRecruiterRejected(recruiter.getEmail(), recruiter.getName());
+        ra.addFlashAttribute("success", recruiter.getName() + " rejected and notified.");
         return "redirect:/admin/recruiters";
     }
 }

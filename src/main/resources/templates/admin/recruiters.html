@@ -64,6 +64,9 @@
         .pill-rejected { background: #fee2e2; color: #991b1b; }
 
         .empty-state { padding: 3rem; text-align: center; color: #9ca3af; }
+
+        /* Flash */
+        .flash-success { background: #d1fae5; border: 1px solid #a7f3d0; border-radius: 0.75rem; padding: 0.875rem 1.25rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.75rem; color: #065f46; font-size: 0.875rem; font-weight: 500; }
     </style>
 </head>
 <body>
@@ -112,6 +115,11 @@
     <div class="page-header">
         <h1>Recruiters</h1>
         <p>Review and manage recruiter accounts</p>
+    </div>
+
+    <div class="flash-success" th:if="${success}">
+        <i class="fas fa-check-circle"></i>
+        <span th:text="${success}"></span>
     </div>
 
     <div class="table-card">
