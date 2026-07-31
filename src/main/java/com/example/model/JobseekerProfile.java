@@ -18,6 +18,9 @@ public class JobseekerProfile {
     @JoinColumn(name = "jobseeker_id")
     private Jobseeker jobseeker;
 
+    @Column(name = "mobile_number", length = 15)
+    private String mobileNumber;
+
     @Column(name = "profile_headline", length = 500)
     private String profileHeadline;
 
@@ -93,6 +96,14 @@ public class JobseekerProfile {
 
     public void setJobseeker(Jobseeker jobseeker) {
         this.jobseeker = jobseeker;
+    }
+
+    public String getMobileNumber() {
+        return mobileNumber;
+    }
+
+    public void setMobileNumber(String mobileNumber) {
+        this.mobileNumber = mobileNumber;
     }
 
     public String getProfileHeadline() {

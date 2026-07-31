@@ -4,8 +4,10 @@ import com.example.dto.JobseekerProfileDto;
 import com.example.dto.JobseekerRegistrationDto;
 import com.example.model.Jobseeker;
 import com.example.model.JobseekerProfile;
+import com.example.model.PendingJobseekerRegistration;
 import com.example.repository.JobseekerProfileRepository;
 import com.example.repository.JobseekerRepository;
+import com.example.repository.PendingJobseekerRegistrationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -26,6 +28,9 @@ public class JobseekerService {
     private JobseekerProfileRepository profileRepository;
 
     @Autowired
+    private PendingJobseekerRegistrationRepository pendingRegistrationRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -34,8 +39,13 @@ public class JobseekerService {
     private static final String CODE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
+    /**
+     * Validates the registration and stashes it as a pending registration until the OTP is
+     * verified — no Jobseeker row (and therefore no admin-portal visibility) is created yet.
+     * Returns the normalized email to send the OTP to.
+     */
     @Transactional
-    public Jobseeker registerJobseeker(JobseekerRegistrationDto dto) {
+    public String registerJobseeker(JobseekerRegistrationDto dto) {
         // Normalize email (trim + lowercase) to avoid duplicates due to case/whitespace
         String normalizedEmail = dto.getEmail().trim().toLowerCase();
 
@@ -62,28 +72,67 @@ public class JobseekerService {
                 existingUser.setRejectionReason(null);
                 existingUser.setRejectedAt(null);
                 existingUser.setEmailVerified(false);
-                return jobseekerRepository.save(existingUser);
+                jobseekerRepository.save(existingUser);
+                return normalizedEmail;
             }
-            // Unverified account (registration was abandoned / OTP failed) — overwrite it
-            // so the user can retry without being permanently blocked
+            // Unverified row from before the pending-registration flow existed — overwrite it
+            // directly so the user can retry without being permanently blocked
             existingUser.setFullName(dto.getFullName());
             existingUser.setPassword(passwordEncoder.encode(dto.getPassword()));
-            return jobseekerRepository.save(existingUser);
+            jobseekerRepository.save(existingUser);
+            return normalizedEmail;
         }
 
+        // No account exists yet — hold the data until OTP verification succeeds instead of
+        // creating the Jobseeker row now.
+        pendingRegistrationRepository.deleteByEmail(normalizedEmail); // clear any abandoned earlier attempt
+        pendingRegistrationRepository.save(new PendingJobseekerRegistration(
+                normalizedEmail,
+                dto.getFullName(),
+                passwordEncoder.encode(dto.getPassword()),
+                dto.getReferredByCode()));
+        return normalizedEmail;
+    }
+
+    /**
+     * Called once the OTP is confirmed. Creates the Jobseeker row now (first time it appears
+     * anywhere, including the admin portal) if this was a pending registration, or simply flips
+     * the verified flag if the row already existed (legacy accounts pre-dating this flow).
+     */
+    @Transactional
+    public Jobseeker confirmEmailVerified(String email) {
+        Optional<Jobseeker> existing = jobseekerRepository.findByEmail(email);
+        if (existing.isPresent()) {
+            Jobseeker jobseeker = existing.get();
+            jobseeker.setEmailVerified(true);
+            jobseeker.setVerifiedAt(LocalDateTime.now());
+            if (jobseeker.getReferralCode() == null || jobseeker.getReferralCode().isBlank()) {
+                jobseeker.setReferralCode(generateUniqueReferralCode());
+            }
+            return jobseekerRepository.save(jobseeker);
+        }
+
+        PendingJobseekerRegistration pending = pendingRegistrationRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalStateException("No pending registration found for " + email));
+
         Jobseeker jobseeker = new Jobseeker();
-        jobseeker.setFullName(dto.getFullName());
-        jobseeker.setEmail(normalizedEmail);
-        jobseeker.setPassword(passwordEncoder.encode(dto.getPassword()));
+        jobseeker.setFullName(pending.getFullName());
+        jobseeker.setEmail(pending.getEmail());
+        jobseeker.setPassword(pending.getPassword());
         jobseeker.setReferralCode(generateUniqueReferralCode());
+        jobseeker.setEmailVerified(true);
+        jobseeker.setVerifiedAt(LocalDateTime.now());
+
+        Jobseeker saved;
         try {
-            Jobseeker saved = jobseekerRepository.save(jobseeker);
-            linkReferral(dto.getReferredByCode(), saved);
-            return saved;
+            saved = jobseekerRepository.save(jobseeker);
         } catch (DataIntegrityViolationException ex) {
             // race condition — another request inserted the same email between check and save
-            throw new IllegalArgumentException("Email already in use: " + normalizedEmail);
+            throw new IllegalArgumentException("Email already in use: " + email);
         }
+        linkReferral(pending.getReferredByCode(), saved);
+        pendingRegistrationRepository.deleteByEmail(email);
+        return saved;
     }
 
     private void linkReferral(String referredByCode, Jobseeker referee) {
@@ -130,6 +179,7 @@ public class JobseekerService {
                 });
 
         // Basic details
+        profile.setMobileNumber(dto.getMobileNumber());
         profile.setProfileHeadline(dto.getProfileHeadline());
         profile.setAbout(dto.getAbout());
 

@@ -5,12 +5,17 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
 import java.util.List;
 
 public class JobseekerProfileDto {
+
+    @NotBlank(message = "Mobile number is required")
+    @Pattern(regexp = "^[6-9]\\d{9}$", message = "Enter a valid 10-digit mobile number")
+    private String mobileNumber;
 
     @Size(max = 500, message = "Headline must not exceed 500 characters")
     private String profileHeadline;
@@ -66,6 +71,14 @@ public class JobseekerProfileDto {
     private LocalDate noticeStartDate;
 
     // ===== GETTERS & SETTERS =====
+
+    public String getMobileNumber() {
+        return mobileNumber;
+    }
+
+    public void setMobileNumber(String mobileNumber) {
+        this.mobileNumber = mobileNumber;
+    }
 
     public String getProfileHeadline() {
         return profileHeadline;

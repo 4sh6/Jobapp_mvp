@@ -158,6 +158,14 @@
                 <h4>👤 Basic Details</h4>
 
                 <div class="form-group">
+                    <label class="form-label">Mobile Number *</label>
+                    <input type="tel" class="form-control" th:field="*{mobileNumber}" placeholder="e.g., 9876543210" maxlength="10" required
+                           th:classappend="${#fields.hasErrors('mobileNumber')} ? 'is-invalid' : ''"/>
+                    <div class="help-text">10-digit mobile number, so recruiters can reach you</div>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('mobileNumber')}" th:errors="*{mobileNumber}"></div>
+                </div>
+
+                <div class="form-group">
                     <label class="form-label">Profile Headline</label>
                     <input type="text" class="form-control" th:field="*{profileHeadline}" placeholder="e.g., Software Engineer with 5 years experience in Java"
                            th:classappend="${#fields.hasErrors('profileHeadline')} ? 'is-invalid' : ''"/>

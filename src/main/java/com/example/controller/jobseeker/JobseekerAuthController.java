@@ -1,8 +1,8 @@
 package com.example.controller.jobseeker;
 
 import com.example.dto.JobseekerRegistrationDto;
-import com.example.model.Jobseeker;
 import com.example.repository.JobseekerRepository;
+import com.example.repository.PendingJobseekerRegistrationRepository;
 import com.example.service.JobseekerService;
 import com.example.service.OtpService;
 import com.example.service.PasswordResetService;
@@ -22,7 +22,6 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Controller
@@ -31,6 +30,7 @@ public class JobseekerAuthController {
 
     @Autowired private JobseekerService jobseekerService;
     @Autowired private JobseekerRepository jobseekerRepository;
+    @Autowired private PendingJobseekerRegistrationRepository pendingRegistrationRepository;
     @Autowired private OtpService otpService;
     @Autowired private PasswordResetService passwordResetService;
     @Autowired private RateLimitService rateLimitService;
@@ -58,9 +58,9 @@ public class JobseekerAuthController {
                                     Model model) {
         if (result.hasErrors()) return "jobseeker/register";
         try {
-            Jobseeker created = jobseekerService.registerJobseeker(dto);
-            otpService.generateAndSendOtp(created.getEmail());
-            model.addAttribute("email", created.getEmail());
+            String email = jobseekerService.registerJobseeker(dto);
+            otpService.generateAndSendOtp(email);
+            model.addAttribute("email", email);
             return "jobseeker/verify-otp";
         } catch (IllegalArgumentException ex) {
             if (ex.getMessage() != null && ex.getMessage().startsWith("Email already in use")) {
@@ -100,10 +100,10 @@ public class JobseekerAuthController {
             model.addAttribute("error", "Invalid or expired OTP. Please request a new one.");
             return "jobseeker/verify-otp";
         }
-        Jobseeker jobseeker = jobseekerRepository.findByEmail(email).orElseThrow();
-        jobseeker.setEmailVerified(true);
-        jobseeker.setVerifiedAt(LocalDateTime.now());
-        jobseekerRepository.save(jobseeker);
+        // Creates the Jobseeker row now (first time it appears in the database or admin
+        // portal) if this was a pending registration, or flips the verified flag if the row
+        // already existed (legacy accounts pre-dating the pending-registration flow).
+        jobseekerService.confirmEmailVerified(email);
 
         // Auto-login so the user is authenticated for the rest of onboarding
         SecurityContext ctx = SecurityContextHolder.createEmptyContext();
@@ -187,11 +187,13 @@ public class JobseekerAuthController {
         if (email == null || email.isBlank()) {
             return "redirect:/jobseeker/register";
         }
-        jobseekerRepository.findByEmail(email.trim().toLowerCase()).ifPresent(js -> {
-            if (!js.isEmailVerified()) {
-                otpService.resendOtp(email.trim().toLowerCase());
-            }
-        });
+        String normalizedEmail = email.trim().toLowerCase();
+        boolean legacyUnverifiedAccount = jobseekerRepository.findByEmail(normalizedEmail)
+                .map(js -> !js.isEmailVerified()).orElse(false);
+        boolean pendingRegistration = pendingRegistrationRepository.findByEmail(normalizedEmail).isPresent();
+        if (legacyUnverifiedAccount || pendingRegistration) {
+            otpService.resendOtp(normalizedEmail);
+        }
         model.addAttribute("email", email);
         model.addAttribute("info", "A new OTP has been sent to your email.");
         return "jobseeker/verify-otp";
