@@ -92,13 +92,19 @@
         <div class="mb-4">
             <div class="section-title">Contact</div>
             <p class="mb-1"><i class="fas fa-envelope me-2 text-muted"></i><span th:text="${candidate.email}">email</span></p>
+            <p class="mb-1" th:if="${profile != null && profile.mobileNumber != null}">
+                <i class="fas fa-phone me-2 text-muted"></i><span th:text="${profile.mobileNumber}">mobile</span>
+            </p>
             <p class="mb-1"><i class="fas fa-calendar me-2 text-muted"></i>Joined
                 <span th:text="${candidate.createdAt != null ? #temporals.format(candidate.createdAt, 'dd MMM yyyy') : 'N/A'}">Date</span>
             </p>
             <p class="mb-0">
                 <span th:if="${candidate.profileCompleted}" class="text-success me-3"><i class="fas fa-check me-1"></i>Profile complete</span>
                 <span th:unless="${candidate.profileCompleted}" class="text-danger me-3"><i class="fas fa-times me-1"></i>Profile incomplete</span>
-                <span th:if="${candidate.resumeUploaded}" class="text-success"><i class="fas fa-check me-1"></i>Resume uploaded</span>
+                <a th:if="${candidate.resumeUploaded}" th:href="@{'/admin/jobseekers/' + ${candidate.id} + '/resume'}"
+                   target="_blank" class="text-success text-decoration-none">
+                    <i class="fas fa-file-pdf me-1"></i>View Resume
+                </a>
                 <span th:unless="${candidate.resumeUploaded}" class="text-danger"><i class="fas fa-times me-1"></i>No resume</span>
             </p>
         </div>
@@ -129,9 +135,9 @@
                         <span th:text="${profile.expectedCtc != null ? '₹' + profile.expectedCtc + ' LPA' : 'N/A'}">—</span>
                     </p>
                     <p class="mb-1"><strong>Notice Period (days):</strong>
-                        <span th:if="${profile.noticePeriodDays != null && profile.servingNotice}"
+                        <span th:if="${profile.noticePeriodDays != null && profile.servingNotice != null && profile.servingNotice}"
                               th:text="${profile.noticePeriodRemainingDays} + ' days remaining (serving notice)'">—</span>
-                        <span th:if="${profile.noticePeriodDays != null && !profile.servingNotice}"
+                        <span th:if="${profile.noticePeriodDays != null && (profile.servingNotice == null || !profile.servingNotice)}"
                               th:text="${profile.noticePeriodDays} + ' days'">—</span>
                         <span th:unless="${profile.noticePeriodDays != null}">N/A</span>
                         <span th:if="${profile.immediateJoiner}" class="badge" style="background:#dcfce7; color:#15803d; margin-left:.4rem;">Immediate Joiner</span>

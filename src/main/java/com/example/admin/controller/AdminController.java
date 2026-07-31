@@ -5,14 +5,21 @@ import com.example.constant.ActivationStatus;
 import com.example.constant.ApprovalStatus;
 import com.example.model.Jobseeker;
 import com.example.model.JobseekerProfile;
+import com.example.model.Resume;
 import com.example.model.recruiter.Recruiter;
 import com.example.repository.EventLogRepository;
 import com.example.repository.JobseekerProfileRepository;
 import com.example.repository.JobseekerRepository;
+import com.example.repository.ResumeRepository;
 import com.example.repository.recruiter.RecruiterRepository;
 import com.example.service.EmailService;
+import com.example.service.FileStorageService;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +34,8 @@ public class AdminController {
 
     @Autowired private JobseekerRepository jobseekerRepository;
     @Autowired private JobseekerProfileRepository profileRepository;
+    @Autowired private ResumeRepository resumeRepository;
+    @Autowired private FileStorageService fileStorageService;
     @Autowired private RecruiterRepository recruiterRepository;
     @Autowired private EventLogRepository eventLogRepository;
     @Autowired private EmailService emailService;
@@ -80,6 +89,21 @@ public class AdminController {
         model.addAttribute("candidate", js);
         model.addAttribute("profile", profile.orElse(null));
         return "admin/candidate-review";
+    }
+
+    @GetMapping("/jobseekers/{id}/resume")
+    @ResponseBody
+    public ResponseEntity<Resource> downloadCandidateResume(@PathVariable Long id) {
+        Resume resume = resumeRepository.findById(id).orElse(null);
+        if (resume == null || resume.getFileName() == null) return ResponseEntity.notFound().build();
+
+        Resource resource = fileStorageService.loadFileAsResource(resume.getFileName());
+        String contentType = resume.getFileName().toLowerCase().endsWith(".pdf")
+                ? "application/pdf" : "application/octet-stream";
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + resume.getFileName() + "\"")
+                .body(resource);
     }
 
     @PostMapping("/jobseekers/{id}/approve")
