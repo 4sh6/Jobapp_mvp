@@ -5,8 +5,10 @@ import com.example.dto.JobseekerProfileDto;
 import com.example.dto.JobseekerRegistrationDto;
 import com.example.model.Jobseeker;
 import com.example.model.JobseekerProfile;
+import com.example.model.PendingJobseekerRegistration;
 import com.example.repository.JobseekerProfileRepository;
 import com.example.repository.JobseekerRepository;
+import com.example.repository.PendingJobseekerRegistrationRepository;
 import com.example.service.JobseekerService;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -20,18 +22,20 @@ import static org.mockito.Mockito.*;
 public class JobseekerServiceTest {
 
     @Test
-    void registerJobseeker_encodesPasswordAndSaves() {
+    void registerJobseeker_encodesPasswordAndStashesPendingRegistration() {
         JobseekerRepository repo = mock(JobseekerRepository.class);
         JobseekerProfileRepository profileRepo = mock(JobseekerProfileRepository.class);
+        PendingJobseekerRegistrationRepository pendingRepo = mock(PendingJobseekerRegistrationRepository.class);
         PasswordEncoder encoder = mock(PasswordEncoder.class);
 
         when(encoder.encode("plainpass")).thenReturn("encoded");
-        when(repo.save(any(Jobseeker.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(repo.findByEmail("john@example.com")).thenReturn(Optional.empty());
 
         JobseekerService service = new JobseekerService();
         // inject via reflection for brevity
         TestUtils.setField(service, "jobseekerRepository", repo);
         TestUtils.setField(service, "profileRepository", profileRepo);
+        TestUtils.setField(service, "pendingRegistrationRepository", pendingRepo);
         TestUtils.setField(service, "passwordEncoder", encoder);
 
         JobseekerRegistrationDto dto = new JobseekerRegistrationDto();
@@ -39,12 +43,15 @@ public class JobseekerServiceTest {
         dto.setEmail("john@example.com");
         dto.setPassword("plainpass");
 
-        Jobseeker saved = service.registerJobseeker(dto);
+        // No Jobseeker row should be created yet — only after OTP verification
+        String email = service.registerJobseeker(dto);
 
-        ArgumentCaptor<Jobseeker> captor = ArgumentCaptor.forClass(Jobseeker.class);
-        verify(repo).save(captor.capture());
+        ArgumentCaptor<PendingJobseekerRegistration> captor = ArgumentCaptor.forClass(PendingJobseekerRegistration.class);
+        verify(pendingRepo).save(captor.capture());
         assertThat(captor.getValue().getPassword()).isEqualTo("encoded");
-        assertThat(saved.getEmail()).isEqualTo("john@example.com");
+        assertThat(captor.getValue().getEmail()).isEqualTo("john@example.com");
+        assertThat(email).isEqualTo("john@example.com");
+        verify(repo, never()).save(any(Jobseeker.class));
     }
 
     @Test
