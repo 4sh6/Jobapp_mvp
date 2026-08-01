@@ -26,18 +26,21 @@ public class OtpService {
 
     @Transactional
     public void generateAndSendOtp(String email) {
+        String normalizedEmail = email.trim().toLowerCase();
         String code = String.format("%06d", random.nextInt(1_000_000));
         LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(10);
 
-        EmailOtp otp = new EmailOtp(email, code, expiresAt);
+        EmailOtp otp = new EmailOtp(normalizedEmail, code, expiresAt);
         otpRepository.save(otp);
 
-        emailService.sendOtp(email, code);
+        emailService.sendOtp(normalizedEmail, code);
     }
 
     @Transactional
     public boolean verifyOtp(String email, String code) {
-        Optional<EmailOtp> latest = otpRepository.findTopByEmailOrderByCreatedAtDesc(email);
+        String normalizedEmail = email == null ? "" : email.trim().toLowerCase();
+        String trimmedCode = code == null ? "" : code.trim();
+        Optional<EmailOtp> latest = otpRepository.findTopByEmailOrderByCreatedAtDesc(normalizedEmail);
         if (latest.isEmpty()) {
             return false;
         }
@@ -45,7 +48,7 @@ public class OtpService {
         if (LocalDateTime.now().isAfter(otp.getExpiresAt())) {
             return false;
         }
-        if (!otp.getCode().equals(code)) {
+        if (!otp.getCode().equals(trimmedCode)) {
             return false;
         }
         // Invalidate OTP after successful verification — prevents reuse
@@ -55,9 +58,10 @@ public class OtpService {
 
     @Transactional
     public void resendOtp(String email) {
+        String normalizedEmail = email.trim().toLowerCase();
         // Delete all previous OTPs for this email then generate a fresh one
-        otpRepository.deleteByEmail(email);
-        generateAndSendOtp(email);
+        otpRepository.deleteByEmail(normalizedEmail);
+        generateAndSendOtp(normalizedEmail);
     }
 
     /** Runs every 15 minutes to purge expired OTPs and prevent database bloat. */

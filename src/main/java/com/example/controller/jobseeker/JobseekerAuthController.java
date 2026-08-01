@@ -87,28 +87,29 @@ public class JobseekerAuthController {
                                   Model model,
                                   HttpSession session,
                                   HttpServletRequest request) {
-        String rateLimitKey = "otp:" + email.toLowerCase();
+        String normalizedEmail = email.trim().toLowerCase();
+        String rateLimitKey = "otp:" + normalizedEmail;
         if (!rateLimitService.isAllowed(rateLimitKey, 5, 600)) {
-            model.addAttribute("email", email);
+            model.addAttribute("email", normalizedEmail);
             model.addAttribute("error", "Too many attempts. Please wait 10 minutes before trying again.");
             return "jobseeker/verify-otp";
         }
 
-        boolean ok = otpService.verifyOtp(email, code);
+        boolean ok = otpService.verifyOtp(normalizedEmail, code);
         if (!ok) {
-            model.addAttribute("email", email);
+            model.addAttribute("email", normalizedEmail);
             model.addAttribute("error", "Invalid or expired OTP. Please request a new one.");
             return "jobseeker/verify-otp";
         }
         // Creates the Jobseeker row now (first time it appears in the database or admin
         // portal) if this was a pending registration, or flips the verified flag if the row
         // already existed (legacy accounts pre-dating the pending-registration flow).
-        jobseekerService.confirmEmailVerified(email);
+        jobseekerService.confirmEmailVerified(normalizedEmail);
 
         // Auto-login so the user is authenticated for the rest of onboarding
         SecurityContext ctx = SecurityContextHolder.createEmptyContext();
         ctx.setAuthentication(new UsernamePasswordAuthenticationToken(
-                email, null, List.of(new SimpleGrantedAuthority("ROLE_JOBSEEKER"))));
+                normalizedEmail, null, List.of(new SimpleGrantedAuthority("ROLE_JOBSEEKER"))));
         SecurityContextHolder.setContext(ctx);
         request.getSession(true).setAttribute(
                 HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, ctx);
@@ -194,7 +195,7 @@ public class JobseekerAuthController {
         if (legacyUnverifiedAccount || pendingRegistration) {
             otpService.resendOtp(normalizedEmail);
         }
-        model.addAttribute("email", email);
+        model.addAttribute("email", normalizedEmail);
         model.addAttribute("info", "A new OTP has been sent to your email.");
         return "jobseeker/verify-otp";
     }
