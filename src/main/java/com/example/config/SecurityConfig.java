@@ -253,7 +253,7 @@ public class SecurityConfig {
                 .oauth2Login(oauth -> oauth
                         .loginPage("/jobseeker/login")
                         .userInfoEndpoint(userInfo ->
-                                userInfo.userService(jobseekerOAuth2UserService))
+                                userInfo.oidcUserService(jobseekerOAuth2UserService))
                         .successHandler(jobseekerSuccessHandler())
                         .failureUrl("/jobseeker/login?error")
                 )
