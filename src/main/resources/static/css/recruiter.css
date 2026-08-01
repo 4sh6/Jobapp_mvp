@@ -770,7 +770,8 @@ textarea.form-control { resize: vertical; min-height: 100px; }
 
 /* ─── Responsive ─── */
 @media (max-width: 768px) {
-  .sidebar { display: none; }
+  .app-layout { flex-direction: column; }
+  .sidebar { width: 100%; height: auto; position: relative; top: auto; left: auto; bottom: auto; flex-direction: row; flex-wrap: wrap; }
   .main-content { margin-left: 0; }
   .page-body { padding: 1.25rem; }
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
