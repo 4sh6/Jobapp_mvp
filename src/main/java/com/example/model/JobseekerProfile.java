@@ -33,13 +33,13 @@ public class JobseekerProfile {
     @Column(name = "experience_months")
     private Integer experienceMonths;
 
-    @Column(name = "current_company")
+    @Column(name = "current_company", length = 500)
     private String currentCompany;
 
     @Column(name = "past_companies", length = 1000)
     private String pastCompanies;
 
-    @Column(name = "\"current_role\"")
+    @Column(name = "\"current_role\"", length = 500)
     private String currentRole;
 
     @Column(name = "current_ctc")
@@ -48,26 +48,28 @@ public class JobseekerProfile {
     @Column(name = "expected_ctc")
     private Double expectedCtc;
 
+    @Column(length = 1000)
     private String skills;
 
     @Column(name = "primary_skills", length = 1000)
     private String primarySkills;
 
-    @Column(name = "highest_education")
+    @Column(name = "highest_education", length = 500)
     private String highestEducation;
 
+    @Column(length = 500)
     private String institution;
 
-    @Column(name = "field_of_study")
+    @Column(name = "field_of_study", length = 500)
     private String fieldOfStudy;
 
     @Column(name = "graduation_year")
     private Integer graduationYear;
 
-    @Column(name = "preferred_locations")
+    @Column(name = "preferred_locations", length = 1000)
     private String preferredLocations;
 
-    @Column(name = "work_mode")
+    @Column(name = "work_mode", length = 500)
     private String workMode;
 
     @Column(name = "notice_period_days")
