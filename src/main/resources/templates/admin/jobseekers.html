@@ -30,7 +30,8 @@
             font-weight: 900; font-size: 0.9rem; color: #fff;
         }
         .brand-text { overflow: hidden; white-space: nowrap; transition: opacity 0.2s; }
-        .brand-text span { font-size: 1.1rem; font-weight: 800; color: #fff; display: block; }
+        .brand-text .brand-name { font-size: 1.1rem; font-weight: 800; color: #fff; display: block; }
+        .brand-text .brand-name .brand-accent { color: #a5b4fc; }
         .brand-text small { font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.1em; }
         .sidebar.collapsed .brand-text { opacity: 0; width: 0; pointer-events: none; }
         .sidebar-toggle { background: none; border: none; cursor: pointer; color: rgba(255,255,255,0.5); padding: 0.25rem; border-radius: 0.375rem; transition: all 0.15s; flex-shrink: 0; line-height: 1; }
@@ -75,6 +76,19 @@
         .tab-count { background: rgba(255,255,255,0.2); border-radius: 999px; padding: 0.1rem 0.4rem; font-size: 0.7rem; }
         .tab-btn:not(.active) .tab-count { background: #f3f4f6; color: #6b7280; }
 
+        /* Filter bar */
+        .filter-bar {
+            background: #fff; border-radius: 0.875rem; border: 1px solid #e5e7eb;
+            padding: 1rem 1.25rem; margin-bottom: 1.25rem;
+        }
+        .filter-row { display: flex; align-items: flex-end; gap: 1rem; flex-wrap: wrap; }
+        .filter-field { display: flex; flex-direction: column; gap: 0.3rem; }
+        .filter-field label { font-size: 0.72rem; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.04em; }
+        .filter-field input { width: auto; }
+        .filter-field.skills-field input { width: 220px; }
+        .filter-field.exp-field input { width: 100px; }
+        .filter-actions { display: flex; gap: 0.5rem; }
+
         /* Flash */
         .flash-success { background: #d1fae5; border: 1px solid #a7f3d0; border-radius: 0.75rem; padding: 0.875rem 1.25rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.75rem; color: #065f46; font-size: 0.875rem; font-weight: 500; }
 
@@ -97,6 +111,8 @@
 
         .rejection-note { font-size: 0.78rem; color: #ef4444; margin-top: 0.4rem; }
 
+        .skill-chip { background: #ede9fe; color: #5b21b6; padding: 0.15rem 0.6rem; border-radius: 999px; font-size: 0.72rem; font-weight: 600; display: inline-block; margin: 0.15rem 0.25rem 0 0; }
+
         /* Empty */
         .empty-state { background: #fff; border-radius: 1rem; padding: 3rem; text-align: center; color: #9ca3af; border: 1px solid #e5e7eb; }
     </style>
@@ -108,7 +124,7 @@
     <div class="sidebar-brand">
         <div class="brand-group">
             <div class="brand-icon">K</div>
-            <div class="brand-text"><span>KoderHyre</span><small>Admin Portal</small></div>
+            <div class="brand-text"><span class="brand-name">Koder<span class="brand-accent">Hyre</span></span><small>Admin Portal</small></div>
         </div>
         <button class="sidebar-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
     </div>
@@ -118,20 +134,20 @@
             <i class="fas fa-home nav-icon"></i><span class="nav-label">Dashboard</span>
         </a>
         <div class="nav-section-label mt-2">Candidates</div>
-        <a href="/admin/jobseekers?status=PENDING" data-tip="Pending Review"
+        <a th:href="@{/admin/jobseekers(status='PENDING', skills=${filterSkills}, expMin=${filterExpMin}, expMax=${filterExpMax})}" data-tip="Pending Review"
            th:classappend="${activeTab == 'PENDING'} ? ' active' : ''" class="sidebar-link">
             <i class="fas fa-hourglass-half nav-icon"></i><span class="nav-label">Pending Review</span>
             <span class="sidebar-badge" th:if="${pendingCount > 0}" th:text="${pendingCount}">0</span>
         </a>
-        <a href="/admin/jobseekers?status=APPROVED" data-tip="Approved"
+        <a th:href="@{/admin/jobseekers(status='APPROVED', skills=${filterSkills}, expMin=${filterExpMin}, expMax=${filterExpMax})}" data-tip="Approved"
            th:classappend="${activeTab == 'APPROVED'} ? ' active' : ''" class="sidebar-link">
             <i class="fas fa-check-circle nav-icon"></i><span class="nav-label">Approved</span>
         </a>
-        <a href="/admin/jobseekers?status=HIRED" data-tip="Hired"
+        <a th:href="@{/admin/jobseekers(status='HIRED', skills=${filterSkills}, expMin=${filterExpMin}, expMax=${filterExpMax})}" data-tip="Hired"
            th:classappend="${activeTab == 'HIRED'} ? ' active' : ''" class="sidebar-link">
             <i class="fas fa-trophy nav-icon"></i><span class="nav-label">Hired</span>
         </a>
-        <a href="/admin/jobseekers?status=REJECTED" data-tip="Rejected"
+        <a th:href="@{/admin/jobseekers(status='REJECTED', skills=${filterSkills}, expMin=${filterExpMin}, expMax=${filterExpMax})}" data-tip="Rejected"
            th:classappend="${activeTab == 'REJECTED'} ? ' active' : ''" class="sidebar-link">
             <i class="fas fa-times-circle nav-icon"></i><span class="nav-label">Rejected</span>
         </a>
@@ -163,30 +179,58 @@
 
     <!-- Tab row -->
     <div class="tab-row">
-        <a href="/admin/jobseekers?status=PENDING"
+        <a th:href="@{/admin/jobseekers(status='PENDING', skills=${filterSkills}, expMin=${filterExpMin}, expMax=${filterExpMax})}"
            th:classappend="${activeTab == 'PENDING'} ? ' active' : ''"
            class="tab-btn">
             <i class="fas fa-hourglass-half"></i> Pending
             <span class="tab-count" th:text="${pendingCount}">0</span>
         </a>
-        <a href="/admin/jobseekers?status=APPROVED"
+        <a th:href="@{/admin/jobseekers(status='APPROVED', skills=${filterSkills}, expMin=${filterExpMin}, expMax=${filterExpMax})}"
            th:classappend="${activeTab == 'APPROVED'} ? ' active' : ''"
            class="tab-btn">
             <i class="fas fa-check-circle"></i> Approved
             <span class="tab-count" th:text="${approvedCount}">0</span>
         </a>
-        <a href="/admin/jobseekers?status=HIRED"
+        <a th:href="@{/admin/jobseekers(status='HIRED', skills=${filterSkills}, expMin=${filterExpMin}, expMax=${filterExpMax})}"
            th:classappend="${activeTab == 'HIRED'} ? ' active' : ''"
            class="tab-btn">
             <i class="fas fa-trophy"></i> Hired
             <span class="tab-count" th:text="${hiredCount}">0</span>
         </a>
-        <a href="/admin/jobseekers?status=REJECTED"
+        <a th:href="@{/admin/jobseekers(status='REJECTED', skills=${filterSkills}, expMin=${filterExpMin}, expMax=${filterExpMax})}"
            th:classappend="${activeTab == 'REJECTED'} ? ' active' : ''"
            class="tab-btn">
             <i class="fas fa-times-circle"></i> Rejected
             <span class="tab-count" th:text="${rejectedCount}">0</span>
         </a>
+    </div>
+
+    <!-- Filter bar -->
+    <div class="filter-bar">
+        <form method="get" th:action="@{/admin/jobseekers}">
+            <input type="hidden" name="status" th:value="${activeTab}"/>
+            <div class="filter-row">
+                <div class="filter-field skills-field">
+                    <label for="filterSkills">Skills</label>
+                    <input type="text" id="filterSkills" name="skills" class="form-control form-control-sm"
+                           th:value="${filterSkills}" placeholder="e.g. React, Java"/>
+                </div>
+                <div class="filter-field exp-field">
+                    <label for="filterExpMin">Min Experience (yrs)</label>
+                    <input type="number" id="filterExpMin" name="expMin" class="form-control form-control-sm"
+                           th:value="${filterExpMin}" min="0" max="50"/>
+                </div>
+                <div class="filter-field exp-field">
+                    <label for="filterExpMax">Max Experience (yrs)</label>
+                    <input type="number" id="filterExpMax" name="expMax" class="form-control form-control-sm"
+                           th:value="${filterExpMax}" min="0" max="100"/>
+                </div>
+                <div class="filter-actions">
+                    <button type="submit" class="btn btn-dark btn-sm"><i class="fas fa-filter me-1"></i>Apply</button>
+                    <a th:href="@{/admin/jobseekers(status=${activeTab})}" class="btn btn-outline-secondary btn-sm">Clear</a>
+                </div>
+            </div>
+        </form>
     </div>
 
     <!-- Empty state -->
@@ -199,13 +243,20 @@
     <!-- Candidate list -->
     <div th:each="js : ${jobseekers}" class="candidate-card">
         <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
-            <div style="min-width: 0;">
+            <div style="min-width: 0;" th:with="profile=${profilesByJobseekerId.get(js.id)}">
                 <div class="candidate-name" th:text="${js.fullName}">Name</div>
                 <div class="candidate-meta">
                     <span><i class="fas fa-envelope me-1"></i><span th:text="${js.email}">email</span></span>
                     <span><i class="fas fa-calendar me-1"></i><span th:text="${js.createdAt != null ? #temporals.format(js.createdAt, 'dd MMM yyyy') : 'N/A'}">Date</span></span>
+                    <span th:if="${profile != null and profile.experienceYears != null}">
+                        <i class="fas fa-briefcase me-1"></i><span th:text="${profile.experienceYears}">0</span> yrs exp
+                    </span>
                     <span th:text="${js.profileCompleted ? '✓ Profile' : '✗ Profile'}"></span>
                     <span th:text="${js.resumeUploaded ? '✓ Resume' : '✗ Resume'}"></span>
+                </div>
+                <div th:if="${profile != null and profile.primarySkills != null and !profile.primarySkills.isEmpty()}" class="mt-1">
+                    <span th:each="skill : ${#strings.arraySplit(profile.primarySkills, ',')}"
+                          th:text="${skill.trim()}" class="skill-chip">Skill</span>
                 </div>
                 <div th:if="${js.rejectionReason != null}" class="rejection-note">
                     <i class="fas fa-info-circle me-1"></i>Reason: <span th:text="${js.rejectionReason}"></span>

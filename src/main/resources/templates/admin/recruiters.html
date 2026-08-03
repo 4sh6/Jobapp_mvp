@@ -24,7 +24,8 @@
             font-weight: 900; font-size: 0.9rem; color: #fff;
         }
         .brand-text { overflow: hidden; white-space: nowrap; transition: opacity 0.2s; }
-        .brand-text span { font-size: 1.1rem; font-weight: 800; color: #fff; display: block; }
+        .brand-text .brand-name { font-size: 1.1rem; font-weight: 800; color: #fff; display: block; }
+        .brand-text .brand-name .brand-accent { color: #a5b4fc; }
         .brand-text small { font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.1em; }
         .sidebar.collapsed .brand-text { opacity: 0; width: 0; pointer-events: none; }
         .sidebar-toggle { background: none; border: none; cursor: pointer; color: rgba(255,255,255,0.5); padding: 0.25rem; border-radius: 0.375rem; transition: all 0.15s; flex-shrink: 0; line-height: 1; }
@@ -76,7 +77,7 @@
     <div class="sidebar-brand">
         <div class="brand-group">
             <div class="brand-icon">K</div>
-            <div class="brand-text"><span>KoderHyre</span><small>Admin Portal</small></div>
+            <div class="brand-text"><span class="brand-name">Koder<span class="brand-accent">Hyre</span></span><small>Admin Portal</small></div>
         </div>
         <button class="sidebar-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
     </div>

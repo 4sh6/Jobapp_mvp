@@ -14,6 +14,7 @@ import com.example.repository.ResumeRepository;
 import com.example.repository.recruiter.RecruiterRepository;
 import com.example.service.EmailService;
 import com.example.service.FileStorageService;
+import com.example.util.SkillFilterUtil;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -25,7 +26,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Controller
@@ -71,10 +74,24 @@ public class AdminController {
     // ─── Candidate review queue ───────────────────────────────────────────────
 
     @GetMapping("/jobseekers")
-    public String listJobseekers(@RequestParam(defaultValue = "PENDING") String status, Model model) {
-        List<Jobseeker> jobseekers = jobseekerRepository.findByApprovalStatusOrderByCreatedAtDesc(status);
+    public String listJobseekers(@RequestParam(defaultValue = "PENDING") String status,
+                                 @RequestParam(defaultValue = "") String skills,
+                                 @RequestParam(defaultValue = "0") Integer expMin,
+                                 @RequestParam(defaultValue = "100") Integer expMax,
+                                 Model model) {
+        String[] terms = SkillFilterUtil.splitSkillTerms(skills);
+        List<Jobseeker> jobseekers = jobseekerRepository.findByApprovalStatusWithFilters(
+                status, terms[0], terms[1], terms[2], terms[3], expMin, expMax);
+        Map<Long, JobseekerProfile> profilesByJobseekerId = new HashMap<>();
+        for (Jobseeker js : jobseekers) {
+            profileRepository.findByJobseeker(js).ifPresent(p -> profilesByJobseekerId.put(js.getId(), p));
+        }
         model.addAttribute("jobseekers", jobseekers);
+        model.addAttribute("profilesByJobseekerId", profilesByJobseekerId);
         model.addAttribute("activeTab", status);
+        model.addAttribute("filterSkills", skills);
+        model.addAttribute("filterExpMin", expMin);
+        model.addAttribute("filterExpMax", expMax);
         model.addAttribute("pendingCount",  jobseekerRepository.countByApprovalStatus(ApprovalStatus.PENDING));
         model.addAttribute("approvedCount", jobseekerRepository.countByApprovalStatus(ApprovalStatus.APPROVED));
         model.addAttribute("rejectedCount", jobseekerRepository.countByApprovalStatus(ApprovalStatus.REJECTED));

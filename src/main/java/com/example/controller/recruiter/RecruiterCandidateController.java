@@ -8,6 +8,7 @@ import com.example.repository.JobseekerRepository;
 import com.example.repository.ResumeRepository;
 import com.example.service.EmailService;
 import com.example.service.JobService;
+import com.example.util.SkillFilterUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -47,7 +48,7 @@ public class RecruiterCandidateController extends RecruiterBaseController {
             return "redirect:/recruiter/dashboard";
         }
         String recruiterCompany = (recruiter.getCompany() != null) ? recruiter.getCompany().getName() : null;
-        String[] terms = splitSkillTerms(skills);
+        String[] terms = SkillFilterUtil.splitSkillTerms(skills);
         Page<JobseekerProfile> candidatesPage = profileRepository.browseWithFilters(
                 terms[0], terms[1], terms[2], terms[3], expMin, expMax, recruiterCompany, pageable);
         List<Job> myJobs = jobService.listJobsByRecruiter(recruiter, org.springframework.data.domain.Pageable.unpaged())
@@ -82,7 +83,7 @@ public class RecruiterCandidateController extends RecruiterBaseController {
         int searchExpMax    = (expMax == 50 && skills.isBlank()) ? (job.getExperienceMax() != null ? job.getExperienceMax() : 50) : expMax;
 
         String recruiterCompany = (recruiter.getCompany() != null) ? recruiter.getCompany().getName() : null;
-        String[] terms = splitSkillTerms(searchSkills);
+        String[] terms = SkillFilterUtil.splitSkillTerms(searchSkills);
         Page<JobseekerProfile> candidatesPage = profileRepository.findMatchingCandidates(
                 terms[0], terms[1], terms[2], terms[3], searchExpMin, searchExpMax, recruiterCompany, pageable);
 
@@ -169,18 +170,6 @@ public class RecruiterCandidateController extends RecruiterBaseController {
 
         ra.addFlashAttribute("success", "Interview invitation sent to " + js.getFullName() + "!");
         return "redirect:/recruiter/jobs/" + jobId + "/candidates";
-    }
-
-    /** Splits a comma-separated skills filter into up to 4 individual search terms (padded with ""). */
-    private static String[] splitSkillTerms(String skillsCsv) {
-        String[] slots = {"", "", "", ""};
-        if (skillsCsv == null || skillsCsv.isBlank()) return slots;
-        int i = 0;
-        for (String term : skillsCsv.split(",")) {
-            String t = term.trim();
-            if (!t.isEmpty() && i < slots.length) slots[i++] = t;
-        }
-        return slots;
     }
 
     @GetMapping("/invites")
