@@ -26,10 +26,21 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public String handleException(Exception ex, HttpServletRequest request, Model model) {
-        log.error("Unhandled exception on {}: {}", request.getRequestURI(), ex.getMessage(), ex);
+        log.error("Unhandled exception on {} {} from ip={} ua={}: {}",
+                request.getMethod(), request.getRequestURI(), clientIp(request),
+                request.getHeader("User-Agent"), ex.getMessage(), ex);
         // Never expose raw exception messages to the user
         model.addAttribute("errorMessage", "We couldn't process your request. Please try again or go back.");
         model.addAttribute("referer", request.getHeader("Referer"));
         return "error";
+    }
+
+    /** Render sits in front as a reverse proxy, so the real client IP is in X-Forwarded-For, not getRemoteAddr(). */
+    private String clientIp(HttpServletRequest request) {
+        String forwardedFor = request.getHeader("X-Forwarded-For");
+        if (forwardedFor != null && !forwardedFor.isBlank()) {
+            return forwardedFor.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
     }
 }
