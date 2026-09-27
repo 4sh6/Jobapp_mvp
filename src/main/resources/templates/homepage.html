@@ -437,9 +437,29 @@
             .hero { padding: 4rem 0 3.5rem; }
             .hero-title { letter-spacing: -1px; }
         }
+
+        /* ─── EARLY ACCESS BANNER ─── */
+        .early-access-bar {
+            background: linear-gradient(90deg, var(--indigo) 0%, var(--violet) 100%);
+            color: #fff; text-align: center;
+            font-size: .82rem; font-weight: 600;
+            padding: .6rem 1.25rem;
+        }
+        .early-access-bar strong { font-weight: 800; }
+        .example-chip {
+            background: #fef3c7; color: #b45309;
+            font-size: .62rem; font-weight: 800; letter-spacing: .03em;
+            padding: .18rem .55rem; border-radius: 1rem; flex-shrink: 0;
+        }
     </style>
 </head>
 <body>
+
+<!-- ─── EARLY ACCESS BANNER ─── -->
+<div class="early-access-bar">
+    <i class="fas fa-rocket" style="margin-right:.4rem;"></i>
+    We're onboarding our first companies right now — <strong>sign up today to get reviewed first</strong> when recruiters go live.
+</div>
 
 <!-- ─── NAVBAR ─── -->
 <nav class="navbar navbar-expand-lg" id="mainNav">
@@ -502,7 +522,10 @@
 
             <div class="col-lg-6 d-none d-lg-block">
                 <div class="hero-card">
-                    <div class="hero-card-lbl">Interview Requests — Waiting for You</div>
+                    <div class="hero-card-lbl" style="display:flex; align-items:center; justify-content:space-between;">
+                        <span>Interview Requests — Waiting for You</span>
+                        <span class="example-chip">EXAMPLE</span>
+                    </div>
 
                     <div class="invite-row">
                         <div class="company-avatar" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);">F</div>
