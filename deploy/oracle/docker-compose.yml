@@ -1,0 +1,51 @@
+# koderhyre on Oracle Cloud Always Free (2 OCPU / 12 GB ARM).
+# Place in the repo root on the VM alongside Caddyfile and .env, then:
+#   docker compose up -d --build
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # The Dockerfile's ENTRYPOINT is tuned for Render's 512MB free instance
+    # (-Xmx256m). This box has 12 GB, so override it here rather than editing
+    # the Dockerfile — that keeps the Dockerfile valid for Render too.
+    # Note: JAVA_TOOL_OPTIONS would NOT work for this, because explicit
+    # command-line flags in ENTRYPOINT take precedence over it.
+    entrypoint:
+      - java
+      - -Xmx3g
+      - -XX:MaxMetaspaceSize=256m
+      - -XX:+UseG1GC          # 2 OCPUs available, so G1 beats SerialGC here
+      - -XX:+ExitOnOutOfMemoryError
+      - -jar
+      - app.jar
+    env_file: .env
+    environment:
+      PORT: 8080
+    expose:
+      - "8080"
+    restart: unless-stopped
+    healthcheck:
+      # The app exposes /actuator (one endpoint) per application.properties.
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/ >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 120s   # Spring Boot on 2 ARM cores needs real headroom
+      retries: 5
+
+  caddy:
+    image: caddy:2-alpine
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data      # certificates live here — do not delete
+      - caddy_config:/config
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:

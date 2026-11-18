@@ -1,0 +1,33 @@
+# Automatic HTTPS for koderhyre.com.
+#
+# Caddy obtains and renews Let's Encrypt certificates with no configuration,
+# but it needs two things to be true at first start:
+#   1. koderhyre.com must already resolve to this VM's public IP
+#   2. the Cloudflare proxy must be OFF (grey cloud / DNS-only), or the
+#      HTTP-01 challenge is intercepted and issuance fails
+#
+# Replace the email below — it is where Let's Encrypt sends expiry warnings.
+
+{
+	email skkr.kr97@gmail.com
+}
+
+koderhyre.com, www.koderhyre.com {
+	encode zstd gzip
+
+	# Spring Boot reads X-Forwarded-* to build correct absolute URLs for
+	# OAuth redirects and email links. Caddy sets these by default on
+	# reverse_proxy, which is why APP_BASE_URL must also be the https form.
+	reverse_proxy app:8080 {
+		header_up X-Real-IP {remote_host}
+	}
+
+	# GlobalExceptionHandler logs the first X-Forwarded-For hop as the client
+	# IP (commit 9616a89), so keep this access log for correlating incidents.
+	log {
+		output file /data/access.log {
+			roll_size 10mb
+			roll_keep 5
+		}
+	}
+}

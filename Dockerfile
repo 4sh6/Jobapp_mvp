@@ -21,12 +21,25 @@ COPY docker/cockroachdb-root.crt /root/.postgresql/root.crt
 
 EXPOSE 8080
 
-# Render's Standard instance has 2GB total RAM. Without explicit limits, the
-# JVM's default ergonomics can over-allocate heap for this app's dependency
-# footprint (Spring, Hibernate, AWS SDK) and OOM before startup finishes.
-# Heap+metaspace are capped well under the container limit so threads, native
-# buffers (AWS SDK client, JDBC driver), and OS overhead have real headroom —
-# on the previous 512MB free tier this margin was ~32MB, which caused frequent
-# OOM kills; at 2GB it's roughly 700MB. Serial GC has lower memory overhead
-# than G1 and is a good fit for a single-CPU instance.
-ENTRYPOINT ["java", "-Xmx1024m", "-XX:MaxMetaspaceSize=256m", "-XX:+UseSerialGC", "-jar", "app.jar"]
+# Sized for Render's FREE instance: 512MB total RAM. Without explicit limits the
+# JVM's default ergonomics over-allocate heap for this app's dependency footprint
+# (Spring, Hibernate, AWS SDK) and OOM before startup finishes.
+#
+# Measured 2026-11-18 booting the packaged jar with exactly these flags: peak
+# RSS 444MB, JVM committed 437MB (heap 256MB committed in full, metaspace 73MB,
+# thread stacks 26MB, code cache 16MB) — so roughly 75MB of headroom on a 512MB
+# instance at idle, not the ~128MB a naive heap+metaspace sum suggests. An
+# earlier pass at the free tier left only ~32MB and was OOM-killed frequently.
+# Serial GC has lower memory overhead than G1 and suits a single CPU.
+#
+# The remaining risk is concurrency, not startup: Tomcat's default max-threads
+# of 200 would add up to ~100MB of stacks (200 x 512k) if they were ever all
+# created. Cap server.tomcat.threads.max if real traffic arrives.
+# TieredStopAtLevel=1 caps JIT at C1, which cuts code-cache/compiler memory and
+# shortens the cold start that free-tier spin-down makes routine. Xss512k halves
+# the default thread stack — Tomcat's 200-thread default is otherwise a real
+# share of the budget.
+#
+# NOTE: if this is ever moved back to a 2GB Standard instance, raise these
+# (1024m/256m was the tuned Standard setting) — 256m heap will throttle there.
+ENTRYPOINT ["java", "-Xmx256m", "-XX:MaxMetaspaceSize=128m", "-XX:+UseSerialGC", "-XX:TieredStopAtLevel=1", "-Xss512k", "-jar", "app.jar"]

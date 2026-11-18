@@ -39,3 +39,6 @@ build/
 
 ### User-uploaded content — never track user files in git ###
 uploads/
+
+# Oracle Cloud deploy — contains tenancy/compartment OCIDs
+deploy/oracle/oci-vars.env
